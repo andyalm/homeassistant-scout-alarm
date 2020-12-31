@@ -1,0 +1,9 @@
+{
+  "codeowners": ["@andyalm"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/andyalm/homeassistant-scout-alarm",
+  "domain": "scout_alarm",
+  "name": "Scout Alarm",
+  "requirements": ["aiohttp","pysher"]
+}

@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  devenv:
+    build: .
+    volumes:
+      - $PWD:/src/scout-alarm
+    entrypoint: /devenv-entrypoint.sh
+    ports:
+    - '8123:8123'
+    environment:
+      - SCOUT_USERNAME
+      - SCOUT_PASSWORD

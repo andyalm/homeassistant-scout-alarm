@@ -1,0 +1,39 @@
+{
+  "id":"0a70080064100851348db800b8000100",
+  "name": "Basement ",
+  "type": "door_panel",
+  "location_id": "55a5cec6b34ed3ad46000007",
+  "hub_id": "0a7008006410045040afa000a0000100",
+  "address": "0a7008006410045040afa000a00001002",
+  "pro_monitoring_label": "003",
+  "mode_ids":
+  [
+    "55a9c8f93c3f42dd81000029",
+    "55af1139c31f1afd33000025"
+  ],
+  "heartbeat": 1609353015692,
+  "version": "01D03D06",
+  "mongo_id": "55a9b91d9d51814d35000e15",
+  "reported": {
+    "mesh_address": 2.0,
+    "timedout": false,
+    "pan_id": 891.0,
+    "channel": 26.0,
+    "trigger": {
+      "at": "2020-12-30T18:30:15.692Z",
+      "state": "close"
+    },
+    "battery": {
+      "level": 185.0,
+      "low": nil
+    },
+    "fw_version": "1.3.6",
+    "uptime": 5563436.0
+  },
+  "info": {
+    "triggered_at": "2016-12-07T03:54:59.622Z"
+  },
+  "created": "2015-07-18T02:25:33.444Z",
+  "updated": "2020-12-24T16:03:53.899Z",
+  "event": "triggered"
+}
