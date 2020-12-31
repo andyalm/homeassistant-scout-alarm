@@ -1,3 +1,4 @@
 deploy.sh
 debug.sh
 .idea/
+__pycache__/
