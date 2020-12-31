@@ -7,6 +7,10 @@ cd /src/core || exit
 #  echo "scout_alarm:"
 #  echo "  username: $SCOUT_USERNAME"
 #  echo "  password: $SCOUT_PASSWORD"
+#  echo "  modes:"
+#  echo "    armed_away: Away"
+#echo "    armed_home: Upstairs"
+#  echo "    armed_night: Sleep"
 #} >> config/configuration.yaml
 source venv/bin/activate
 

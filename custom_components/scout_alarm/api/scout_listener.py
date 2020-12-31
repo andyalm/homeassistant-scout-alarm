@@ -3,6 +3,7 @@ from custom_components.scout_alarm.const import LOGGER
 import pysher
 import asyncio
 import json
+import logging
 
 
 class ScoutListener:
@@ -10,7 +11,8 @@ class ScoutListener:
 
     def __init__(self, session: ScoutSession):
         self.session = session
-        self.pusher = pysher.Pusher(self.api_key)
+
+        self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG)
         self.socket_id = None
         self._mode_handlers = []
 

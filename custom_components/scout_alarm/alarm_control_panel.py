@@ -1,4 +1,5 @@
 """Support for Scout Alarm Security System alarm control panels."""
+from typing import Dict
 
 from homeassistant.config_entries import (
     ConfigEntry
@@ -40,7 +41,7 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
     scout_alarm = hass.data[DOMAIN]
     """Set up Scout Alarm control panel device."""
     async_add_entities(
-        [ScoutAlarmControlPanel(scout_alarm.location_api, scout_alarm.listener)], True
+        [ScoutAlarmControlPanel(scout_alarm.location_api, scout_alarm.listener, scout_alarm.state_to_mode_map)], True
     )
 
     return True
@@ -49,14 +50,9 @@ async def async_setup_entry(hass, config_entry: ConfigEntry, async_add_entities)
 class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     """An alarm_control_panel implementation for Scout Alarm."""
 
-    mode_to_state = {
-        'Away': STATE_ALARM_ARMED_AWAY,
-        'Sleep': STATE_ALARM_ARMED_NIGHT,
-        'Upstairs': STATE_ALARM_ARMED_HOME
-    }
-
-    def __init__(self, api: ScoutLocationApi, listener: ScoutListener):
-        self.state_to_mode = {value:key for key, value in self.mode_to_state.items()}
+    def __init__(self, api: ScoutLocationApi, listener: ScoutListener, state_to_mode: Dict[str, str]):
+        self.state_to_mode = state_to_mode
+        self.mode_to_state = {value:key for key, value in self.state_to_mode.items()}
         self._modes = None
         self._location = None
         self._api = api
@@ -98,7 +94,15 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     @property
     def supported_features(self) -> int:
         """Return the list of supported features."""
-        return SUPPORT_ALARM_ARM_HOME | SUPPORT_ALARM_ARM_AWAY | SUPPORT_ALARM_ARM_NIGHT
+        features = 0
+        if self.state_to_mode.get(STATE_ALARM_ARMED_HOME):
+            features |= SUPPORT_ALARM_ARM_HOME
+        if self.state_to_mode.get(STATE_ALARM_ARMED_AWAY):
+            features |= SUPPORT_ALARM_ARM_AWAY
+        if self.state_to_mode.get(STATE_ALARM_ARMED_NIGHT):
+            features |= SUPPORT_ALARM_ARM_NIGHT
+
+        return features
 
     @property
     def should_poll(self) -> bool:
@@ -171,7 +175,10 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         return arming_modes[0]
 
     def __mode_for_state(self, state):
-        mode_name = self.state_to_mode[state]
+        mode_name = self.state_to_mode.get(state)
+        if mode_name is None:
+            return None
+
         matching_modes = [m for m in self._modes if m['name'] == mode_name]
         if len(matching_modes) == 0:
             return None

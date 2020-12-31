@@ -5,11 +5,19 @@ from homeassistant.config_entries import (
     ConfigEntry
 )
 
-from .const import DOMAIN, LOGGER, DATA_SCOUT_CONFIG
+from .const import (
+    DOMAIN,
+    LOGGER,
+    DATA_SCOUT_CONFIG,
+    CONF_MODES
+)
 
 from homeassistant.const import (
     CONF_USERNAME,
-    CONF_PASSWORD
+    CONF_PASSWORD,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_NIGHT
 )
 
 import voluptuous as vol
@@ -24,7 +32,14 @@ CONFIG_SCHEMA = vol.Schema(
         DOMAIN: vol.Schema(
             {
                 vol.Required(CONF_USERNAME): cv.string,
-                vol.Required(CONF_PASSWORD): cv.string
+                vol.Required(CONF_PASSWORD): cv.string,
+                vol.Required(CONF_MODES): vol.Schema(
+                    {
+                        vol.Optional(STATE_ALARM_ARMED_AWAY): cv.string,
+                        vol.Optional(STATE_ALARM_ARMED_HOME): cv.string,
+                        vol.Optional(STATE_ALARM_ARMED_NIGHT): cv.string
+                    }
+                )
             }
         )
     },
@@ -59,8 +74,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     username = config_entry.data[CONF_USERNAME]
     password = config_entry.data[CONF_PASSWORD]
+    mode_map = config_entry.data[CONF_MODES]
 
-    scout_alarm = ScoutAlarm(username, password)
+    scout_alarm = ScoutAlarm(username, password, mode_map)
     await scout_alarm.listener.async_connect()
     hass.data[DOMAIN] = scout_alarm
 
@@ -85,8 +101,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 #         )
 
 class ScoutAlarm:
-    def __init__(self, username, password):
+    def __init__(self, username, password, state_to_mode_map):
         self.session = ScoutSession(username, password)
         self.api = ScoutApi(self.session)
         self.location_api = ScoutLocationApi(self.api)
         self.listener = ScoutListener(self.session)
+        self.state_to_mode_map = state_to_mode_map
