@@ -13,7 +13,7 @@ from homeassistant.const import (
     STATE_ALARM_ARMED_HOME
 )
 
-from .const import DOMAIN, CONF_MODES
+from .const import DOMAIN, CONF_MODES, LOGGER
 
 from .api.scout_session import ScoutSession
 from .api.scout_api import ScoutApi, ScoutLocationApi
@@ -36,12 +36,12 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         errors = {}
-
+        LOGGER.info("async_step_user called")
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
         if not user_input:
-            return self._async_show_auth_form()
+            return self._show_auth_form()
 
         can_auth = False
         if user_input is not None:
@@ -55,15 +55,19 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors = {"base": "invalid_auth"}
 
         if not can_auth:
-            return self._async_show_auth_form(errors)
+            return self._show_auth_form(errors)
 
         return await self.async_step_modes()
 
     async def async_step_modes(self, user_input=None):
+        LOGGER.info("async_step_modes called")
+
         if not user_input:
             return await self._async_show_modes_form()
 
         night_mode = user_input.get(STATE_ALARM_ARMED_NIGHT)
+
+
         away_mode = user_input.get(STATE_ALARM_ARMED_AWAY)
         home_mode = user_input.get(STATE_ALARM_ARMED_HOME)
 
@@ -72,10 +76,11 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self._create_entry(user_input)
 
-    def async_step_import(self, user_input):
+    async def async_step_import(self, user_input):
         """Import a config flow from configuration."""
 
-        if self._async_current_entries():
+        current_entries = self._async_current_entries()
+        if current_entries:
             return self.async_abort(reason="single_instance_allowed")
 
         username = user_input[CONF_USERNAME]
@@ -85,15 +90,15 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # code for validating login information and error handling needed
 
         return self.async_create_entry(
-            title=f"{username} (from configuration)",
+            title=f"{username} with modes",
             data={
                 CONF_USERNAME: username,
                 CONF_PASSWORD: password,
                 CONF_MODES: modes
-            },
+            }
         )
 
-    def _async_show_auth_form(self, errors={}):
+    def _show_auth_form(self, errors={}):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
