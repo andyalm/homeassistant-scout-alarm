@@ -21,6 +21,12 @@ class ScoutApi:
     async def get_location_modes(self, location_id):
         return await self.__http('GET', f'/locations/{location_id}/modes')
 
+    async def get_location_devices(self, location_id):
+        return await self.__http('GET', f'/locations/{location_id}/devices')
+
+    async def get_device(self, device_id):
+        return await self.__http('GET', f'/devices/{device_id}')
+
     async def update_mode_state(self, mode_id, state):
         body = {
             'state': state
@@ -55,6 +61,13 @@ class ScoutLocationApi:
     async def get_modes(self):
         location = await self.get_current_location()
         return await self.__api.get_location_modes(location['id'])
+
+    async def get_devices(self):
+        location = await self.get_current_location()
+        return await self.__api.get_location_devices(location['id'])
+
+    async def get_device(self, device_id):
+        return await self.__api.get_device(device_id)
 
     async def get_current_location(self):
         if self.__current_location is not None:

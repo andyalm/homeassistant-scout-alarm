@@ -25,13 +25,10 @@ Note that not all modes need to be mapped, but values do need to be unique, so d
 
 ## What works
 
-An `alarm_control_panel` entity is created whose state will reflect that of your scout alarm.
-
-## Planned TODO
-
- - Add support for door/window sensors
+- An `alarm_control_panel` entity is created whose state will reflect that of your scout alarm.
+- `binary_sensor`'s are added for each `door_panel` and `access_sensor`.
 
 ## Unplanned but would accept contributions
 
- - Camera and other device type support
+ - Scout device types other than `door_panel` and `access_sensor`'s. (I don't have a way to test other device types)
 

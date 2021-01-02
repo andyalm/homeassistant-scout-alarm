@@ -15,6 +15,7 @@ class ScoutListener:
         self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG)
         self.socket_id = None
         self._mode_handlers = []
+        self._device_handlers = []
 
     async def async_connect(self):
         await self.__async_pusher_connect()
@@ -30,12 +31,22 @@ class ScoutListener:
             for handler in self._mode_handlers:
                 handler(data)
 
+        def device_change(payload):
+            LOGGER.info(f"device change: {payload}")
+            data = json.loads(payload)
+            for handler in self._device_handlers:
+                handler(data)
+
         channel.bind('mode', mode_change)
+        channel.bind('device', device_change)
 
         return channel
 
     def on_mode_change(self, callback):
         self._mode_handlers.append(callback)
+
+    def on_device_change(self, callback):
+        self._device_handlers.append(callback)
 
     def __async_pusher_connect(self):
         connected_future = asyncio.Future()

@@ -47,7 +47,8 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 SCOUT_PLATFORMS = [
-    'alarm_control_panel'
+    'alarm_control_panel',
+    'binary_sensor'
 ]
 
 
