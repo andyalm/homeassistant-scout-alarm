@@ -88,7 +88,7 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # code for validating login information and error handling needed
 
         return self.async_create_entry(
-            title=f"{username} with modes",
+            title=f"{username}",
             data={
                 CONF_USERNAME: username,
                 CONF_PASSWORD: password,

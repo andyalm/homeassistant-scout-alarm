@@ -74,6 +74,10 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._alarm_pending = False
 
     @property
+    def unique_id(self):
+        return self._location['id'] if self._location else None
+
+    @property
     def icon(self):
         """Return the icon."""
         return ICON

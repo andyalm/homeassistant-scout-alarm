@@ -57,6 +57,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         self._listener.on_device_change(self.__on_device_change)
 
     @property
+    def unique_id(self):
+        return self._device['id']
+
+    @property
     def name(self):
         return self._device['name']
 
