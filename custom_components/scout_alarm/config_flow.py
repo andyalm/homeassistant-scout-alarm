@@ -66,8 +66,6 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self._async_show_modes_form()
 
         night_mode = user_input.get(STATE_ALARM_ARMED_NIGHT)
-
-
         away_mode = user_input.get(STATE_ALARM_ARMED_AWAY)
         home_mode = user_input.get(STATE_ALARM_ARMED_HOME)
 

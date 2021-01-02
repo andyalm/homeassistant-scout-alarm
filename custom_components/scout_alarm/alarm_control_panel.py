@@ -19,6 +19,8 @@ from homeassistant.const import (
     STATE_ALARM_DISARMED,
     STATE_ALARM_ARMED_NIGHT,
     STATE_ALARM_ARMING,
+    STATE_ALARM_PENDING,
+    STATE_ALARM_TRIGGERED,
     CONF_USERNAME
 )
 from homeassistant.components.alarm_control_panel import (
@@ -26,7 +28,16 @@ from homeassistant.components.alarm_control_panel import (
     ATTR_CODE_ARM_REQUIRED
 )
 
-from .const import ATTRIBUTION, DOMAIN, LOGGER
+from .const import (
+    ATTRIBUTION,
+    DOMAIN,
+    LOGGER,
+    SCOUT_MODE_ARMED,
+    SCOUT_MODE_ARMING,
+    SCOUT_MODE_DISARMED,
+    SCOUT_MODE_ALARMED,
+    SCOUT_MODE_EVENT_TRIGGERED
+)
 
 from .api.scout_api import ScoutLocationApi
 from .api.scout_listener import ScoutListener
@@ -60,6 +71,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._listener.on_mode_change(self.__on_mode_changed)
         self._location_channel = None
         self._last_changed_by = None
+        self._alarm_pending = False
 
     @property
     def icon(self):
@@ -71,7 +83,13 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         if self._modes is None:
             return None
 
+        if self.is_alarmed():
+            return STATE_ALARM_TRIGGERED
+
         armed_mode = self.armed_mode()
+        if armed_mode and self._alarm_pending:
+            return STATE_ALARM_PENDING
+
         if armed_mode is not None:
             return self.mode_to_state[armed_mode['name']] or STATE_ALARM_ARMED_AWAY
 
@@ -110,7 +128,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     async def async_alarm_disarm(self, code=None):
         """Send disarm command."""
-        armed_mode = self.armed_mode() or self.arming_mode()
+        armed_mode = self.alarmed_mode() or self.armed_mode() or self.arming_mode()
         if armed_mode:
             await self._api.update_mode_state(armed_mode['id'], 'disarm')
 
@@ -118,18 +136,18 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         """Send arm home command."""
         home_mode = self.__mode_for_state(STATE_ALARM_ARMED_HOME)
         if home_mode:
-            await self._api.update_mode_state(home_mode['id'], 'arming')
+            await self._api.update_mode_state(home_mode['id'], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_away(self, code=None):
         """Send arm away command."""
         away_mode = self.__mode_for_state(STATE_ALARM_ARMED_AWAY)
         if away_mode:
-            await self._api.update_mode_state(away_mode['id'], 'arming')
+            await self._api.update_mode_state(away_mode['id'], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_night(self, code=None):
         night_mode = self.__mode_for_state(STATE_ALARM_ARMED_NIGHT)
         if night_mode:
-            await self._api.update_mode_state(night_mode['id'], 'arming')
+            await self._api.update_mode_state(night_mode['id'], SCOUT_MODE_ARMING)
 
     async def async_update(self):
         """Update device state."""
@@ -160,19 +178,24 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             "cellular_backup": False,
         }
 
-    def armed_mode(self):
-        armed_modes = [m for m in self._modes if m['state'] == 'armed']
+    def get_mode(self, scout_mode):
+        armed_modes = [m for m in self._modes if m['state'] == scout_mode]
         if len(armed_modes) == 0:
             return None
 
         return armed_modes[0]
 
-    def arming_mode(self):
-        arming_modes = [m for m in self._modes if m['state'] == 'arming']
-        if len(arming_modes) == 0:
-            return None
+    def is_alarmed(self):
+        return self.alarmed_mode() is not None
 
-        return arming_modes[0]
+    def alarmed_mode(self):
+        return self.get_mode(SCOUT_MODE_ALARMED)
+
+    def armed_mode(self):
+        return self.get_mode(SCOUT_MODE_ARMED)
+
+    def arming_mode(self):
+        return self.get_mode(SCOUT_MODE_ARMING)
 
     def __mode_for_state(self, state):
         mode_name = self.state_to_mode.get(state)
@@ -188,5 +211,13 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     def __on_mode_changed(self, data):
         affector = data.get('affector')
         if affector:
-            self._last_changed_by = affector.get('name')
+            last_changed_by = affector.get('name')
+            self._last_changed_by = last_changed_by.strip() if last_changed_by else None
+
+        event = data.get('event')
+        if event == SCOUT_MODE_EVENT_TRIGGERED:
+            self._alarm_pending = True
+        else:
+            self._alarm_pending = False
+
         self.schedule_update_ha_state(force_refresh=True)
