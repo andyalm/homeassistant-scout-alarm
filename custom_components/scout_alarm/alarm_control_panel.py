@@ -1,4 +1,5 @@
 """Support for Scout Alarm Security System alarm control panels."""
+import asyncio
 from typing import Dict
 
 from homeassistant.config_entries import (
@@ -72,6 +73,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._location_channel = None
         self._last_changed_by = None
         self._alarm_pending = False
+        self._expected_update_state = None
 
     @property
     def unique_id(self):
@@ -162,6 +164,23 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         LOGGER.info(f"scout_alarm panel state is {self.state} (last changed by {last_changed_by})")
         if self._location_channel is None:
             self._location_channel = await self._listener.async_add_location(self._location['id'])
+        if self._expected_update_state:
+            LOGGER.info(f"checking _expected_update_state")
+            expected_state = self._expected_update_state
+            self._expected_update_state = None
+            mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
+            num_retries = 0
+            while mode and mode['state'] != expected_state['event']:
+                LOGGER.info(f"Retrieved state from api did not match the state from the last mode event (last event: '{expected_state['event']}', retrieved state: '{mode['state']}', retries: {num_retries})")
+                await asyncio.sleep(0.5)
+                num_retries += 1
+                self._modes = await self._api.get_modes()
+                mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
+                if num_retries >= 3:
+                    LOGGER.error(f"Scout alarm_control_panel may be out of sync.")
+                    break
+
+
 
     @property
     def name(self):
@@ -171,6 +190,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
+        mode = self.mode()
 
         return {
             ATTR_CODE_FORMAT: self.code_format,
@@ -180,6 +200,16 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             "device_id": self._location['hub_id'],
             "battery_backup": False,
             "cellular_backup": False,
+            "scout_mode": mode['name'].strip() if mode else None
+        }
+
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "identifiers": {(DOMAIN, self._location['id'])},
+            "manufacturer": "Scout Alarm",
+            "name": self.name
         }
 
     def get_mode(self, scout_mode):
@@ -191,6 +221,9 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     def is_alarmed(self):
         return self.alarmed_mode() is not None
+
+    def mode(self):
+        return self.alarmed_mode() or self.armed_mode() or self.arming_mode()
 
     def alarmed_mode(self):
         return self.get_mode(SCOUT_MODE_ALARMED)
@@ -224,4 +257,5 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         else:
             self._alarm_pending = False
 
+        self._expected_update_state = data
         self.schedule_update_ha_state(force_refresh=True)
