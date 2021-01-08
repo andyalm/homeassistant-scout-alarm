@@ -1,5 +1,6 @@
 """Support for Scout Alarm Security System alarm control panels."""
 import asyncio
+import json
 from typing import Dict
 
 from homeassistant.config_entries import (
@@ -73,7 +74,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._location_channel = None
         self._last_changed_by = None
         self._alarm_pending = False
-        self._expected_update_state = None
+        self._last_pushed_state = None
 
     @property
     def unique_id(self):
@@ -164,20 +165,19 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         LOGGER.info(f"scout_alarm panel state is {self.state} (last changed by {last_changed_by})")
         if self._location_channel is None:
             self._location_channel = await self._listener.async_add_location(self._location['id'])
-        if self._expected_update_state:
-            LOGGER.info(f"checking _expected_update_state")
-            expected_state = self._expected_update_state
-            self._expected_update_state = None
+        if self._last_pushed_state:
+            expected_state = self.__pop_last_pushed_state()
             mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
             num_retries = 0
             while mode and mode['state'] != expected_state['event']:
                 LOGGER.info(f"Retrieved state from api did not match the state from the last mode event (last event: '{expected_state['event']}', retrieved state: '{mode['state']}', retries: {num_retries})")
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1)
                 num_retries += 1
                 self._modes = await self._api.get_modes()
+                expected_state = self.__pop_last_pushed_state() or expected_state
                 mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
-                if num_retries >= 3:
-                    LOGGER.error(f"Scout alarm_control_panel may be out of sync.")
+                if num_retries >= 30:
+                    LOGGER.error(f"Scout alarm_control_panel may be out of sync. Expected mode '{expected_state['mode_id']}' to have state '{expected_state['event']}' but found: {json.dumps(self._modes)}.")
                     break
 
 
@@ -257,5 +257,11 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         else:
             self._alarm_pending = False
 
-        self._expected_update_state = data
+        self._last_pushed_state = data
         self.schedule_update_ha_state(force_refresh=True)
+
+    def __pop_last_pushed_state(self):
+        last_pushed_state = self._last_pushed_state
+        self._last_pushed_state = None
+
+        return last_pushed_state
