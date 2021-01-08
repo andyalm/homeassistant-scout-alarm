@@ -98,6 +98,15 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
             "device_type": self._device['type'],
         }
 
+    @property
+    def device_info(self):
+        """Return device registry information for this entity."""
+        return {
+            "identifiers": {(DOMAIN, self._device['id'])},
+            "manufacturer": "Scout Alarm",
+            "name": self.name
+        }
+
     async def async_update(self):
         """Update device state."""
         LOGGER.info(f'scout_alarm device {self.name} updating...')
