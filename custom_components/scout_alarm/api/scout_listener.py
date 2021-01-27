@@ -12,7 +12,7 @@ class ScoutListener:
     def __init__(self, session: ScoutSession):
         self.session = session
 
-        self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG)
+        self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG, auto_sub=True)
         self.socket_id = None
         self._mode_handlers = []
         self._device_handlers = []
