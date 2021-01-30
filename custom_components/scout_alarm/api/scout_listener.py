@@ -12,15 +12,26 @@ class ScoutListener:
     def __init__(self, session: ScoutSession):
         self.session = session
 
-        self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG, auto_sub=True)
+        self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG)
         self.socket_id = None
         self._mode_handlers = []
         self._device_handlers = []
+        self._locations = []
 
     async def async_connect(self):
         await self.__async_pusher_connect()
 
     async def async_add_location(self, location_id):
+        self._locations.append(location_id)
+        return await self.__async_subscribe_location(location_id)
+
+    def on_mode_change(self, callback):
+        self._mode_handlers.append(callback)
+
+    def on_device_change(self, callback):
+        self._device_handlers.append(callback)
+
+    async def __async_subscribe_location(self, location_id):
         channel_name = f'private-{location_id}'
         channel_token = await self.session.async_get_channel_token(self.socket_id, channel_name)
         channel = self.pusher.subscribe(channel_name, auth=channel_token)
@@ -42,12 +53,6 @@ class ScoutListener:
 
         return channel
 
-    def on_mode_change(self, callback):
-        self._mode_handlers.append(callback)
-
-    def on_device_change(self, callback):
-        self._device_handlers.append(callback)
-
     def __async_pusher_connect(self):
         connected_future = asyncio.Future()
 
@@ -55,6 +60,9 @@ class ScoutListener:
             data = json.loads(payload)
             self.socket_id = data['socket_id']
             LOGGER.info(f"Connected to scout_alarm pusher with socket_id '{self.socket_id}'")
+            # re-subscribe to any locations we've already subscribed to (to handle reconnects)
+            for location_id in self._locations:
+                self.__async_subscribe_location(location_id)
             if not connected_future.done():
                 connected_future.set_result(data['socket_id'])
 
