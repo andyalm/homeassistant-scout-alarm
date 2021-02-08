@@ -14,7 +14,10 @@ from homeassistant.const import (
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_WINDOW,
-    DEVICE_CLASS_OPENING
+    DEVICE_CLASS_OPENING,
+    DEVICE_CLASS_SMOKE,
+    DEVICE_CLASS_MOTION,
+    DEVICE_CLASS_MOISTURE
 )
 
 from .const import (
@@ -23,12 +26,18 @@ from .const import (
     LOGGER,
     SCOUT_DEVICE_STATE_OPEN,
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR
+    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
+    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
+    SCOUT_DEVICE_TYPE_SMOKE_ALARM,
+    SCOUT_DEVICE_TYPE_WATER_SENSOR
 )
 
 SUPPORTED_SCOUT_DEVICE_TYPES = [
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR
+    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
+    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
+    SCOUT_DEVICE_TYPE_SMOKE_ALARM,
+    SCOUT_DEVICE_TYPE_WATER_SENSOR
 ]
 
 
@@ -77,6 +86,12 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         device_type = self._device['type']
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
             return DEVICE_CLASS_DOOR
+        elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+            return DEVICE_CLASS_SMOKE
+        elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
+            return DEVICE_CLASS_MOTION
+        elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
+            return DEVICE_CLASS_MOISTURE
         elif "door" in self._device['name'].lower():
             return DEVICE_CLASS_DOOR
         elif "window" in self._device['name'].lower():
@@ -103,8 +118,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         """Return device registry information for this entity."""
         return {
             "identifiers": {(DOMAIN, self._device['id'])},
-            "manufacturer": "Scout Alarm",
-            "name": self.name
+            "manufacturer": self._device['reported']['manufacturer'],
+            "name": self.name,
+            "sw_version": self._device['reported']['fw_version'],
+            "model": self._device['reported']['model']
         }
 
     async def async_update(self):
