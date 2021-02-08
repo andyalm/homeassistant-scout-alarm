@@ -106,11 +106,31 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
+
+        """does device report humidity"""
+        check_humidity = self._device['reported'].get('humidity')
+        if check_humidity:
+            humidity = str(check_humidity.get('percent')) + "%"
+        else:
+            humidity = "N/A"
+
+        """does device report temperature"""
+        check_temp = self._device['reported'].get('temperature')
+        if check_temp:
+            tempC = round(check_temp.get('degrees'))
+            tempF = round(tempC * 1.8 + 32)
+            degree_sign = u"\u00B0"
+            temp = str(tempC) + degree_sign + "C / " + str(tempF) + degree_sign + "F"
+        else:
+            temp = "N/A"
+
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
             "device_id": self._device['id'],
-            "battery_low": self._device['reported']['battery'].get('low'),
             "device_type": self._device['type'],
+            "battery_low": self._device['reported']['battery'].get('low'),
+            "temperature": temp,
+            "humidity": humidity
         }
 
     @property
