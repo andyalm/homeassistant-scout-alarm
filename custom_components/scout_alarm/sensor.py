@@ -18,25 +18,9 @@ from homeassistant.components.sensor import (
 from .const import (
     ATTRIBUTION,
     DOMAIN,
-    LOGGER,
-    SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
-    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
-    SCOUT_DEVICE_TYPE_WATER_SENSOR
+    LOGGER
 )
 
-SUPPORTED_SCOUT_DEVICE_TYPES_TEMPERATURE = [
-    SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
-    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
-    SCOUT_DEVICE_TYPE_WATER_SENSOR
-]
-
-SUPPORTED_SCOUT_DEVICE_TYPES_HUMIDITY = [
-    SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
-    SCOUT_DEVICE_TYPE_MOTION_SENSOR
-]
 
 SENSOR_TYPES = {
     "temperature": [TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, "-T", "(T)"],
@@ -52,11 +36,13 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
     devices = await location_api.get_devices()
 
     for d in devices:
-        if d['type'] in SUPPORTED_SCOUT_DEVICE_TYPES_TEMPERATURE:
+        """is the device a temp sensor?"""
+        if d['reported'].get('temperature'):
             entities.append(
                 ScoutSensor(d, "temperature", scout_alarm.location_api, config_entry)
             )
-        if d['type'] in SUPPORTED_SCOUT_DEVICE_TYPES_HUMIDITY:
+        """is the device a humidity sensor?"""
+        if d['reported'].get('humidity'):
             entities.append(
                 ScoutSensor(d, "humidity", scout_alarm.location_api, config_entry)
             )
@@ -133,10 +119,10 @@ class ScoutSensor(Entity):
         """Return device registry information for this entity."""
         return {
             "identifiers": {(DOMAIN, self._device['id'])},
-            "manufacturer": self._device['reported']['manufacturer'],
+            "manufacturer": self._device['reported'].get('manufacturer'),
             "name": self.name,
-            "sw_version": self._device['reported']['fw_version'],
-            "model": self._device['reported']['model']
+            "sw_version": self._device['reported'].get('fw_version'),
+            "model": self._device['reported'].get('model')
         }
 
     async def async_update(self):

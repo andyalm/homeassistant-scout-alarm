@@ -118,10 +118,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         """Return device registry information for this entity."""
         return {
             "identifiers": {(DOMAIN, self._device['id'])},
-            "manufacturer": self._device['reported']['manufacturer'],
+            "manufacturer": self._device['reported'].get('manufacturer'),
             "name": self.name,
-            "sw_version": self._device['reported']['fw_version'],
-            "model": self._device['reported']['model']
+            "sw_version": self._device['reported'].get('fw_version'),
+            "model": self._device['reported'].get('model')
         }
 
     async def async_update(self):
