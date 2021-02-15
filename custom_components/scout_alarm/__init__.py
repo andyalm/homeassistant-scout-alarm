@@ -17,7 +17,8 @@ from homeassistant.const import (
     CONF_PASSWORD,
     STATE_ALARM_ARMED_HOME,
     STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_NIGHT
+    STATE_ALARM_ARMED_NIGHT,
+    STATE_ALARM_ARMED_CUSTOM_BYPASS
 )
 
 import voluptuous as vol
@@ -37,7 +38,8 @@ CONFIG_SCHEMA = vol.Schema(
                     {
                         vol.Optional(STATE_ALARM_ARMED_AWAY): cv.string,
                         vol.Optional(STATE_ALARM_ARMED_HOME): cv.string,
-                        vol.Optional(STATE_ALARM_ARMED_NIGHT): cv.string
+                        vol.Optional(STATE_ALARM_ARMED_NIGHT): cv.string,
+                        vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): cv.string
                     }
                 )
             }

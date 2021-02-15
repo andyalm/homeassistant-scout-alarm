@@ -23,7 +23,8 @@
                 "data": {
                     "armed_away": "Away mode",
                     "armed_home": "Armed at Home mode",
-                    "armed_night": "Night mode"
+                    "armed_night": "Night mode",
+                    "armed_custom_bypass": "Bypass mode"
                 },
                 "title": "Map HA states to your Scout modes"
             }

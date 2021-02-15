@@ -12,6 +12,7 @@ from homeassistant.components.alarm_control_panel.const import (
     SUPPORT_ALARM_ARM_AWAY,
     SUPPORT_ALARM_ARM_HOME,
     SUPPORT_ALARM_ARM_NIGHT,
+    SUPPORT_ALARM_ARM_CUSTOM_BYPASS
 )
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
@@ -20,6 +21,7 @@ from homeassistant.const import (
     STATE_ALARM_ARMED_HOME,
     STATE_ALARM_DISARMED,
     STATE_ALARM_ARMED_NIGHT,
+    STATE_ALARM_ARMED_CUSTOM_BYPASS,
     STATE_ALARM_ARMING,
     STATE_ALARM_PENDING,
     STATE_ALARM_TRIGGERED,
@@ -126,6 +128,8 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             features |= SUPPORT_ALARM_ARM_AWAY
         if self.state_to_mode.get(STATE_ALARM_ARMED_NIGHT):
             features |= SUPPORT_ALARM_ARM_NIGHT
+        if self.state_to_mode.get(STATE_ALARM_ARMED_CUSTOM_BYPASS):
+            features |= SUPPORT_ALARM_ARM_CUSTOM_BYPASS
 
         return features
 
@@ -155,6 +159,11 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         night_mode = self.__mode_for_state(STATE_ALARM_ARMED_NIGHT)
         if night_mode:
             await self._api.update_mode_state(night_mode['id'], SCOUT_MODE_ARMING)
+
+    async def async_alarm_arm_custom_bypass(self, code=None):
+        bypass_mode = self.__mode_for_state(STATE_ALARM_ARMED_CUSTOM_BYPASS)
+        if bypass_mode:
+            await self._api.update_mode_state(bypass_mode['id'], SCOUT_MODE_ARMING)
 
     async def async_update(self):
         """Update device state."""
