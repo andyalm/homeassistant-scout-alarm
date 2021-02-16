@@ -25,6 +25,9 @@ from .const import (
     ATTRIBUTION,
     LOGGER,
     SCOUT_DEVICE_STATE_OPEN,
+    SCOUT_DEVICE_STATE_WET,
+    SCOUT_DEVICE_STATE_MOTION_START,
+    SCOUT_DEVICE_STATE_OK,
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
     SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
     SCOUT_DEVICE_TYPE_MOTION_SENSOR,
@@ -79,7 +82,26 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         if not trigger:
             return False
 
-        return trigger['state'] == SCOUT_DEVICE_STATE_OPEN
+        device_type = self._device['type']
+        if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
+        elif device_type == SCOUT_DEVICE_TYPE_ACCESS_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
+        elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_MOTION_START)
+        elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_WET)
+        elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+            smoke_state = trigger['state']['smoke']
+            """some smoke alarm devices are combo devices and also return co"""
+            co_state = trigger['state'].get('co')
+            if co_state is None:
+                co_state = "ok"
+            """on_state is true if either smoke or co are not ok"""
+            on_state = (smoke_state != SCOUT_DEVICE_STATE_OK or co_state != SCOUT_DEVICE_STATE_OK)
+
+        return on_state
+
 
     @property
     def device_class(self):
