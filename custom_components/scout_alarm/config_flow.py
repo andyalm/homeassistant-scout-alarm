@@ -10,7 +10,8 @@ from homeassistant.const import (
     CONF_USERNAME,
     STATE_ALARM_ARMED_AWAY,
     STATE_ALARM_ARMED_NIGHT,
-    STATE_ALARM_ARMED_HOME
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_ARMED_CUSTOM_BYPASS
 )
 
 from .const import DOMAIN, CONF_MODES, LOGGER
@@ -68,8 +69,9 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         night_mode = user_input.get(STATE_ALARM_ARMED_NIGHT)
         away_mode = user_input.get(STATE_ALARM_ARMED_AWAY)
         home_mode = user_input.get(STATE_ALARM_ARMED_HOME)
+        bypass_mode = user_input.get(STATE_ALARM_ARMED_CUSTOM_BYPASS)
 
-        if not night_mode and not away_mode and not home_mode:
+        if not night_mode and not away_mode and not home_mode and not bypass_mode:
             return await self._async_show_modes_form(errors={"base": "mode_mapping_required"})
 
         return self._create_entry(user_input)
@@ -134,7 +136,8 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Optional(STATE_ALARM_ARMED_HOME): vol.In(scout_modes),
                     vol.Optional(STATE_ALARM_ARMED_AWAY): vol.In(scout_modes),
-                    vol.Optional(STATE_ALARM_ARMED_NIGHT): vol.In(scout_modes)
+                    vol.Optional(STATE_ALARM_ARMED_NIGHT): vol.In(scout_modes),
+                    vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): vol.In(scout_modes)
                 }
             ),
             errors=errors
