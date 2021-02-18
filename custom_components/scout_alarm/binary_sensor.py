@@ -77,6 +77,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         return self._device['name']
 
     @property
+    def available(self) -> bool:
+        return self._device['reported']['timedout'] == False
+
+    @property
     def is_on(self):
         trigger = self.reported_trigger()
         if not trigger:

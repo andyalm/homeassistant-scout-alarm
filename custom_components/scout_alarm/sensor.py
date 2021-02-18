@@ -71,6 +71,10 @@ class ScoutSensor(Entity):
         return SENSOR_TYPES.get(self._data_key)[3] + " " + self._device['name']
 
     @property
+    def available(self) -> bool:
+        return self._device['reported']['timedout'] == False
+
+    @property
     def device_class(self):
         """Return the device class of this entity."""
         return (
