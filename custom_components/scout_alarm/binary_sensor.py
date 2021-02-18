@@ -14,7 +14,10 @@ from homeassistant.const import (
 from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_DOOR,
     DEVICE_CLASS_WINDOW,
-    DEVICE_CLASS_OPENING
+    DEVICE_CLASS_OPENING,
+    DEVICE_CLASS_SMOKE,
+    DEVICE_CLASS_MOTION,
+    DEVICE_CLASS_MOISTURE
 )
 
 from .const import (
@@ -22,13 +25,22 @@ from .const import (
     ATTRIBUTION,
     LOGGER,
     SCOUT_DEVICE_STATE_OPEN,
+    SCOUT_DEVICE_STATE_WET,
+    SCOUT_DEVICE_STATE_MOTION_START,
+    SCOUT_DEVICE_STATE_OK,
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR
+    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
+    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
+    SCOUT_DEVICE_TYPE_SMOKE_ALARM,
+    SCOUT_DEVICE_TYPE_WATER_SENSOR
 )
 
 SUPPORTED_SCOUT_DEVICE_TYPES = [
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
-    SCOUT_DEVICE_TYPE_ACCESS_SENSOR
+    SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
+    SCOUT_DEVICE_TYPE_MOTION_SENSOR,
+    SCOUT_DEVICE_TYPE_SMOKE_ALARM,
+    SCOUT_DEVICE_TYPE_WATER_SENSOR
 ]
 
 
@@ -70,13 +82,38 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         if not trigger:
             return False
 
-        return trigger['state'] == SCOUT_DEVICE_STATE_OPEN
+        device_type = self._device['type']
+        if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
+        elif device_type == SCOUT_DEVICE_TYPE_ACCESS_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
+        elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_MOTION_START)
+        elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_WET)
+        elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+            smoke_state = trigger['state']['smoke']
+            """some smoke alarm devices are combo devices and also return co"""
+            co_state = trigger['state'].get('co')
+            if co_state is None:
+                co_state = "ok"
+            """on_state is true if either smoke or co are not ok"""
+            on_state = (smoke_state != SCOUT_DEVICE_STATE_OK or co_state != SCOUT_DEVICE_STATE_OK)
+
+        return on_state
+
 
     @property
     def device_class(self):
         device_type = self._device['type']
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
             return DEVICE_CLASS_DOOR
+        elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+            return DEVICE_CLASS_SMOKE
+        elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
+            return DEVICE_CLASS_MOTION
+        elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
+            return DEVICE_CLASS_MOISTURE
         elif "door" in self._device['name'].lower():
             return DEVICE_CLASS_DOOR
         elif "window" in self._device['name'].lower():
@@ -94,8 +131,8 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
             "device_id": self._device['id'],
-            "battery_low": self._device['reported']['battery'].get('low'),
             "device_type": self._device['type'],
+            "battery_low": self._device['reported']['battery'].get('low')
         }
 
     @property
@@ -103,8 +140,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         """Return device registry information for this entity."""
         return {
             "identifiers": {(DOMAIN, self._device['id'])},
-            "manufacturer": "Scout Alarm",
-            "name": self.name
+            "manufacturer": self._device['reported'].get('manufacturer'),
+            "name": self.name,
+            "sw_version": self._device['reported'].get('fw_version'),
+            "model": self._device['reported'].get('model')
         }
 
     async def async_update(self):
