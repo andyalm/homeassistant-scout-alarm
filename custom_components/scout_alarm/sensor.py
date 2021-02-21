@@ -67,8 +67,7 @@ class ScoutSensor(Entity):
     @property
     def name(self):
         """Return the device name, including the type as a prefix"""
-        """return self._device['name']"""
-        return SENSOR_TYPES.get(self._data_key)[3] + " " + self._device['name']
+        return self._device['name']
 
     @property
     def available(self) -> bool:
