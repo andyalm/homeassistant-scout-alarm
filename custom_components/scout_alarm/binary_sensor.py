@@ -18,7 +18,8 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_MOTION,
     DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_VIBRATION
+    DEVICE_CLASS_VIBRATION,
+    DEVICE_CLASS_LOCK
 )
 
 from .const import (
@@ -29,12 +30,15 @@ from .const import (
     SCOUT_DEVICE_STATE_WET,
     SCOUT_DEVICE_STATE_MOTION_START,
     SCOUT_DEVICE_STATE_OK,
+    SCOUT_DEVICE_STATE_LOCKED,
+    SCOUT_DEVICE_STATE_UNLOCKED,
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
     SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
     SCOUT_DEVICE_TYPE_MOTION_SENSOR,
     SCOUT_DEVICE_TYPE_SMOKE_ALARM,
     SCOUT_DEVICE_TYPE_WATER_SENSOR,
-    SCOUT_DEVICE_TYPE_GLASS_BREAK
+    SCOUT_DEVICE_TYPE_GLASS_BREAK,
+    SCOUT_DEVICE_TYPE_DOOR_LOCK
 )
 
 SUPPORTED_SCOUT_DEVICE_TYPES = [
@@ -43,7 +47,8 @@ SUPPORTED_SCOUT_DEVICE_TYPES = [
     SCOUT_DEVICE_TYPE_MOTION_SENSOR,
     SCOUT_DEVICE_TYPE_SMOKE_ALARM,
     SCOUT_DEVICE_TYPE_WATER_SENSOR,
-    SCOUT_DEVICE_TYPE_GLASS_BREAK
+    SCOUT_DEVICE_TYPE_GLASS_BREAK,
+    SCOUT_DEVICE_TYPE_DOOR_LOCK
 ]
 
 
@@ -100,6 +105,8 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
             on_state = (trigger['state'] == SCOUT_DEVICE_STATE_WET)
         elif device_type == SCOUT_DEVICE_TYPE_GLASS_BREAK:
             on_state = (trigger['state'] != SCOUT_DEVICE_STATE_OK)
+        elif device_type == SCOUT_DEVICE_TYPE_DOOR_LOCK:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_UNLOCKED)
         elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
             smoke_state = trigger['state']['smoke']
             """some smoke alarm devices are combo devices and also return co"""
@@ -125,6 +132,8 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
             return DEVICE_CLASS_MOISTURE
         elif device_type == SCOUT_DEVICE_TYPE_GLASS_BREAK:
             return DEVICE_CLASS_VIBRATION
+        elif device_type == SCOUT_DEVICE_TYPE_DOOR_LOCK:
+            return DEVICE_CLASS_LOCK
         elif "door" in self._device['name'].lower():
             return DEVICE_CLASS_DOOR
         elif "window" in self._device['name'].lower():
@@ -139,11 +148,11 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
+        """            "battery_low": self._device['reported'].get('battery').get('low')"""
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
             "device_id": self._device['id'],
-            "device_type": self._device['type'],
-            "battery_low": self._device['reported']['battery'].get('low')
+            "device_type": self._device['type']
         }
 
     @property
