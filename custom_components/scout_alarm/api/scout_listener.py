@@ -9,8 +9,9 @@ import logging
 class ScoutListener:
     api_key = "baf06f5a867d462e09d4"
 
-    def __init__(self, session: ScoutSession):
+    def __init__(self, session: ScoutSession, loop):
         self.session = session
+        self._loop = loop
 
         self.pusher = pysher.Pusher(self.api_key, log_level=logging.DEBUG)
         self.socket_id = None
@@ -32,6 +33,7 @@ class ScoutListener:
         self._device_handlers.append(callback)
 
     async def __async_subscribe_location(self, location_id):
+        LOGGER.info(f"subscribing to location #{location_id}...")
         channel_name = f'private-{location_id}'
         channel_token = await self.session.async_get_channel_token(self.socket_id, channel_name)
         channel = self.pusher.subscribe(channel_name, auth=channel_token)
@@ -51,6 +53,7 @@ class ScoutListener:
         channel.bind('mode', mode_change)
         channel.bind('device', device_change)
 
+        LOGGER.info(f"subscribed to location #{location_id}")
         return channel
 
     def __async_pusher_connect(self):
@@ -62,7 +65,8 @@ class ScoutListener:
             LOGGER.info(f"Connected to scout_alarm pusher with socket_id '{self.socket_id}'")
             # re-subscribe to any locations we've already subscribed to (to handle reconnects)
             for location_id in self._locations:
-                self.__async_subscribe_location(location_id)
+                asyncio.run_coroutine_threadsafe(self.__async_subscribe_location(location_id), self._loop)
+
             if not connected_future.done():
                 connected_future.set_result(data['socket_id'])
 
