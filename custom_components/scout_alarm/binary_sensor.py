@@ -81,7 +81,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        return self._device['reported']['timedout'] == False
+        return self._device['reported'].get('timedout') is not True
 
     @property
     def is_on(self):
@@ -90,6 +90,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
             return False
 
         device_type = self._device['type']
+        on_state = False
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
             on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
         elif device_type == SCOUT_DEVICE_TYPE_ACCESS_SENSOR:
@@ -139,11 +140,12 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
+        battery = self._device['reported'].get('battery')
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
             "device_id": self._device['id'],
             "device_type": self._device['type'],
-            "battery_low": self._device['reported']['battery'].get('low')
+            "battery_low": battery.get('low') if battery else False
         }
 
     @property
