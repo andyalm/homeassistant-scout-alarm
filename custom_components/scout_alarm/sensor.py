@@ -71,7 +71,7 @@ class ScoutSensor(Entity):
 
     @property
     def available(self) -> bool:
-        return self._device['reported']['timedout'] == False
+        return self._device['reported'].get('timedout') is not True
 
     @property
     def device_class(self):
@@ -110,11 +110,12 @@ class ScoutSensor(Entity):
     @property
     def device_state_attributes(self):
         """Return the state attributes."""
+        battery = self._device['reported'].get('battery')
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
             "device_id": self._device['id'],
             "device_type": self._device['type'],
-            "battery_low": self._device['reported']['battery'].get('low')
+            "battery_low": battery.get('low') if battery else False
         }
 
     @property
