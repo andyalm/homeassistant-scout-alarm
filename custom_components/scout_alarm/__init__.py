@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     password = config_entry.data[CONF_PASSWORD]
     mode_map = config_entry.data[CONF_MODES]
 
-    scout_alarm = ScoutAlarm(username, password, mode_map)
+    scout_alarm = ScoutAlarm(username, password, mode_map, hass)
     await scout_alarm.listener.async_connect()
     hass.data[DOMAIN] = scout_alarm
 
@@ -105,9 +105,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 #         )
 
 class ScoutAlarm:
-    def __init__(self, username, password, state_to_mode_map):
+    def __init__(self, username, password, state_to_mode_map, hass):
         self.session = ScoutSession(username, password)
         self.api = ScoutApi(self.session)
         self.location_api = ScoutLocationApi(self.api)
-        self.listener = ScoutListener(self.session)
+        self.listener = ScoutListener(self.session, hass.loop)
         self.state_to_mode_map = state_to_mode_map
