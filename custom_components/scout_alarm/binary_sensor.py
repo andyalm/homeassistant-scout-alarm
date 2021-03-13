@@ -18,7 +18,9 @@ from homeassistant.components.binary_sensor import (
     DEVICE_CLASS_SMOKE,
     DEVICE_CLASS_MOTION,
     DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_VIBRATION
+    DEVICE_CLASS_VIBRATION,
+    DEVICE_CLASS_LOCK,
+    DEVICE_CLASS_SAFETY
 )
 
 from .const import (
@@ -29,12 +31,16 @@ from .const import (
     SCOUT_DEVICE_STATE_WET,
     SCOUT_DEVICE_STATE_MOTION_START,
     SCOUT_DEVICE_STATE_OK,
+    SCOUT_DEVICE_STATE_LOCKED,
+    SCOUT_DEVICE_STATE_UNLOCKED,
     SCOUT_DEVICE_TYPE_DOOR_PANEL,
     SCOUT_DEVICE_TYPE_ACCESS_SENSOR,
     SCOUT_DEVICE_TYPE_MOTION_SENSOR,
     SCOUT_DEVICE_TYPE_SMOKE_ALARM,
+    SCOUT_DEVICE_TYPE_CO_DETECTOR,
     SCOUT_DEVICE_TYPE_WATER_SENSOR,
-    SCOUT_DEVICE_TYPE_GLASS_BREAK
+    SCOUT_DEVICE_TYPE_GLASS_BREAK,
+    SCOUT_DEVICE_TYPE_DOOR_LOCK
 )
 
 SUPPORTED_SCOUT_DEVICE_TYPES = [
@@ -43,18 +49,36 @@ SUPPORTED_SCOUT_DEVICE_TYPES = [
     SCOUT_DEVICE_TYPE_MOTION_SENSOR,
     SCOUT_DEVICE_TYPE_SMOKE_ALARM,
     SCOUT_DEVICE_TYPE_WATER_SENSOR,
-    SCOUT_DEVICE_TYPE_GLASS_BREAK
+    SCOUT_DEVICE_TYPE_GLASS_BREAK,
+    SCOUT_DEVICE_TYPE_DOOR_LOCK
 ]
 
 
 async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities):
     """Set up entry."""
-
+    entities = []
     scout_alarm = hass.data[DOMAIN]
     location_api = scout_alarm.location_api
 
     devices = await location_api.get_devices()
-    entities = [ScoutDoorWindowSensor(d, scout_alarm.location_api, scout_alarm.listener) for d in devices if d['type'] in SUPPORTED_SCOUT_DEVICE_TYPES]
+    for d in devices:
+      type = d['type']
+      if type in SUPPORTED_SCOUT_DEVICE_TYPES:
+        """Create two devices if this is a combo smoke/co device"""
+        if type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+          trigger = d['reported']['trigger']
+          if trigger['state'].get('smoke'):
+            entities.append(
+              ScoutDoorWindowSensor(d, SCOUT_DEVICE_TYPE_SMOKE_ALARM, scout_alarm.location_api, scout_alarm.listener)
+            )
+          if trigger['state'].get('co'):
+            entities.append(
+              ScoutDoorWindowSensor(d, SCOUT_DEVICE_TYPE_CO_DETECTOR, scout_alarm.location_api, scout_alarm.listener)
+            )
+        else:
+          entities.append(
+            ScoutDoorWindowSensor(d, type, scout_alarm.location_api, scout_alarm.listener)
+          )
 
     """Set up Scout Alarm control panel device."""
     async_add_entities(
@@ -65,15 +89,23 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
 
 
 class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
-    def __init__(self, device, location_api, listener):
+    def __init__(self, device, type, location_api, listener):
         self._device = device
+        self._type = type
         self._api = location_api
         self._listener = listener
         self._listener.on_device_change(self.__on_device_change)
 
     @property
     def unique_id(self):
-        return self._device['id']
+        device_type = self._type
+        if device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+          id =  self._device['id'] + "-SA"
+        elif device_type == SCOUT_DEVICE_TYPE_CO_DETECTOR:
+          id =  self._device['id'] + "-CO"
+        else:
+          id = self._device['id']
+        return id
 
     @property
     def name(self):
@@ -89,7 +121,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         if not trigger:
             return False
 
-        device_type = self._device['type']
+        device_type = self._type
         on_state = False
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
             on_state = (trigger['state'] == SCOUT_DEVICE_STATE_OPEN)
@@ -101,31 +133,31 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
             on_state = (trigger['state'] == SCOUT_DEVICE_STATE_WET)
         elif device_type == SCOUT_DEVICE_TYPE_GLASS_BREAK:
             on_state = (trigger['state'] != SCOUT_DEVICE_STATE_OK)
+        elif device_type == SCOUT_DEVICE_TYPE_DOOR_LOCK:
+            on_state = (trigger['state'] == SCOUT_DEVICE_STATE_UNLOCKED)
         elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
-            smoke_state = trigger['state']['smoke']
-            """some smoke alarm devices are combo devices and also return co"""
-            co_state = trigger['state'].get('co')
-            if co_state is None:
-                co_state = "ok"
-            """on_state is true if either smoke or co are not ok"""
-            on_state = (smoke_state != SCOUT_DEVICE_STATE_OK or co_state != SCOUT_DEVICE_STATE_OK)
-
+            on_state = (trigger['state']['smoke'] != SCOUT_DEVICE_STATE_OK)
+        elif device_type == SCOUT_DEVICE_TYPE_CO_DETECTOR:
+            on_state = (trigger['state']['co'] != SCOUT_DEVICE_STATE_OK)
         return on_state
-
 
     @property
     def device_class(self):
-        device_type = self._device['type']
+        device_type = self._type
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
             return DEVICE_CLASS_DOOR
         elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
             return DEVICE_CLASS_SMOKE
+        elif device_type == SCOUT_DEVICE_TYPE_CO_DETECTOR:
+            return DEVICE_CLASS_SAFETY
         elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
             return DEVICE_CLASS_MOTION
         elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
             return DEVICE_CLASS_MOISTURE
         elif device_type == SCOUT_DEVICE_TYPE_GLASS_BREAK:
             return DEVICE_CLASS_VIBRATION
+        elif device_type == SCOUT_DEVICE_TYPE_DOOR_LOCK:
+            return DEVICE_CLASS_LOCK
         elif "door" in self._device['name'].lower():
             return DEVICE_CLASS_DOOR
         elif "window" in self._device['name'].lower():
