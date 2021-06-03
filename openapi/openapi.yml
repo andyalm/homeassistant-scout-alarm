@@ -321,7 +321,6 @@ components:
         - hub_id
         - id
         - location_id
-        - mode_ids
         - name
         - type
       properties:
@@ -343,6 +342,12 @@ components:
               properties:
                 hub:
                   type: boolean
+            modes:
+              properties:
+                sleep:
+                  type: string
+                away:
+                  type: string
         heartbeat:
           type: integer
           readOnly: true
@@ -392,6 +397,8 @@ components:
         at:
           type: string
           format: date-time
+        level:
+          type: number
         low:
           type: string
           format: date-time
@@ -471,7 +478,7 @@ components:
         channel:
           type: integer
         fw_version:
-          type: string
+          type: integer
         humidity:
           $ref: '#/components/schemas/DeviceHumidityReport'
         manufacturer:
@@ -522,6 +529,7 @@ components:
             - $ref: '#/components/schemas/AccessSensorState'
             - $ref: '#/components/schemas/DoorPanelState'
             - $ref: '#/components/schemas/GlassBreakState'
+            - $ref: '#/components/schemas/KeyPadState'
             - $ref: '#/components/schemas/MotionSensorState'
             - $ref: '#/components/schemas/SmokeAlarmState'
             - $ref: '#/components/schemas/WaterSensorState'
@@ -538,6 +546,7 @@ components:
         - door_panel
         - door_lock
         - glass_break
+        - key_pad
         - light_bulb
         - motion_sensor
         - outlet
@@ -938,6 +947,13 @@ components:
       properties:
         valid:
           type: boolean
+
+    KeyPadState:
+      type: string
+      enum:
+        - away
+        - disarmed
+        - sleep
 
     Location:
       required:
