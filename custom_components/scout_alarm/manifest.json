@@ -6,5 +6,5 @@
   "documentation": "https://github.com/andyalm/homeassistant-scout-alarm",
   "domain": "scout_alarm",
   "name": "Scout Alarm",
-  "requirements": ["aiohttp","pysher==1.0.6"]
+  "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"]
 }
