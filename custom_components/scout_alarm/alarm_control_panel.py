@@ -40,7 +40,8 @@ from .const import (
     SCOUT_MODE_ARMING,
     SCOUT_MODE_DISARMED,
     SCOUT_MODE_ALARMED,
-    SCOUT_MODE_EVENT_TRIGGERED
+    SCOUT_MODE_EVENT_TRIGGERED,
+    SCOUT_MODE_EVENT_DISMISSED
 )
 
 from .api.scout_api import ScoutLocationApi
@@ -75,7 +76,6 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._listener.on_mode_change(self.__on_mode_changed)
         self._location_channel = None
         self._last_changed_by = None
-        self._alarm_pending = False
         self._last_pushed_state = None
 
     @property
@@ -96,7 +96,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             return STATE_ALARM_TRIGGERED
 
         armed_mode = self.armed_mode()
-        if armed_mode and self._alarm_pending:
+        if armed_mode and self._last_pushed_state and self._last_pushed_state['mode_id'] == armed_mode['id'] and self._last_pushed_state['event'] == SCOUT_MODE_EVENT_TRIGGERED:
             return STATE_ALARM_PENDING
 
         if armed_mode is not None:
@@ -174,7 +174,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         LOGGER.info(f"scout_alarm panel state is {self.state} (last changed by {last_changed_by})")
         if self._location_channel is None:
             self._location_channel = await self._listener.async_add_location(self._location['id'])
-        if self._last_pushed_state:
+        if self._last_pushed_state and self._last_pushed_state['event'] != SCOUT_MODE_EVENT_TRIGGERED and self._last_pushed_state['event'] != SCOUT_MODE_EVENT_DISMISSED:
             expected_state = self.__pop_last_pushed_state()
             mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
             num_retries = 0
@@ -259,12 +259,6 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         if affector:
             last_changed_by = affector.get('name')
             self._last_changed_by = last_changed_by.strip() if last_changed_by else None
-
-        event = data.get('event')
-        if event == SCOUT_MODE_EVENT_TRIGGERED:
-            self._alarm_pending = True
-        else:
-            self._alarm_pending = False
 
         self._last_pushed_state = data
         self.schedule_update_ha_state(force_refresh=True)
