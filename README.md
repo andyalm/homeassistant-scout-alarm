@@ -1,6 +1,7 @@
 # Scout Alarm for Home Assistant
 
-An experimental Scout Alarm Integration for Home Assistant.
+This is a custom Home Assistant component to integrate the [Scout Alarm](https://www.scoutalarm.com/) into Home Assistant.  This integration creates `binary_sensor`s for supported Scout components 
+and `sensor`s for those components that report on Temperature and Humidity.
 
 ## Installation
 
@@ -23,20 +24,30 @@ scout_alarm:
 
 Note that not all modes need to be mapped, but values do need to be unique, so do not map multiple states to the same scout mode.
 
-## What works
+## Supported Devices
 
-- An `alarm_control_panel` entity is created whose state will reflect that of your scout alarm.
-- A `binary_sensor` is created for each of the following supported Scout devices:
-  - `door_panel`
-  - `access_sensor`
-  - `motion_sensor`
-  - `smoke_alarm`
-  - `water_sensor`
-  - `glass_break`
-  - `door_lock`
-- `temperature` and `humidity` sensors are created for those Scout devices that report on that data
+The following Scout devices are currently supported:
+- Door Panel
+- Access Sensor
+- Motion Sensor
+- Smart Smoke and Carbon Monoxide Detector
+- Water Sensor
+- Glass Break Sensor
+- Door Lock
 
 ## Unplanned but would accept contributions
 
- - Scout Camera
+The following devices are not yet known to work:
+- Scout Indoor Camera
+- Scout Video Doorbell
+- Keypad
 
+## Created Entities
+
+An `alarm_control_panel` entity is created whose state will reflect that of your scout alarm.
+
+A `binary_sensor` entity is created for each supported Scout device.  
+
+A `sensor` entitity is created for Temperature and Humidity for those Scout devices that report on that data. 
+
+For any one Scout device (i.e, Motion Sensor), up to three Entities might be created (the `binary_sensor` for the device and two `sensor`s for temperature and humidity).
