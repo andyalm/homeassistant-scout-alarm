@@ -1,6 +1,6 @@
 # Scout Alarm for Home Assistant
 
-An experimental Scout Alarm Integration for Home Assistant.
+A Scout Alarm Integration for Home Assistant.
 
 ## Installation
 
@@ -26,9 +26,10 @@ Note that not all modes need to be mapped, but values do need to be unique, so d
 ## What works
 
 - An `alarm_control_panel` entity is created whose state will reflect that of your scout alarm.
-- `binary_sensor`'s are added for each `door_panel` and `access_sensor`.
+- `binary_sensor`'s are added for each `door_panel`, `access_sensor`, `motion_sensor`, `smoke_alarm`, `water_sensor`, `glass_break`, and `lock` device.
+- `sensor`'s are added to track temperature and humidity for devices that support it.
 
 ## Unplanned but would accept contributions
 
- - Scout device types other than `door_panel` and `access_sensor`'s. (I don't have a way to test other device types)
+ - Cameras. (We don't have a way to test cameras at this time)
 
