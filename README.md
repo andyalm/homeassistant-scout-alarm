@@ -1,7 +1,6 @@
 # Scout Alarm for Home Assistant
 
-This is a custom Home Assistant component to integrate the [Scout Alarm](https://www.scoutalarm.com/) into Home Assistant.  This integration creates `binary_sensor`s for supported Scout components 
-and `sensor`s for those components that report on Temperature and Humidity.
+This is a custom Home Assistant component to integrate the [Scout Alarm](https://www.scoutalarm.com/) into Home Assistant.
 
 ## Installation
 
@@ -26,7 +25,6 @@ Note that not all modes need to be mapped, but values do need to be unique, so d
 
 ## Supported Devices
 
-The following Scout devices are currently supported:
 - Door Panel
 - Access Sensor
 - Motion Sensor
@@ -37,7 +35,6 @@ The following Scout devices are currently supported:
 
 ## Unplanned but would accept contributions
 
-The following devices are not yet known to work:
 - Scout Indoor Camera
 - Scout Video Doorbell
 - Keypad
