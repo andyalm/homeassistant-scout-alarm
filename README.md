@@ -1,6 +1,6 @@
 # Scout Alarm for Home Assistant
 
-This is a custom Home Assistant component to integrate the [Scout Alarm](https://www.scoutalarm.com/) into Home Assistant.
+A custom [Scout Alarm](https://www.scoutalarm.com/) Integration for Home Assistant.
 
 ## Installation
 

@@ -4,6 +4,7 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/andyalm/homeassistant-scout-alarm",
+  "issue_tracker": "https://github.com/andyalm/homeassistant-scout-alarm/issues",
   "domain": "scout_alarm",
   "name": "Scout Alarm",
   "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"]
