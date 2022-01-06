@@ -1,8 +1,8 @@
 import json
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.typing import HomeAssistantType
 import homeassistant.components.sensor as sensor
+import logging
 
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
@@ -12,7 +12,9 @@ from homeassistant.const import (
 
 from homeassistant.components.sensor import (
     DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_HUMIDITY
+    DEVICE_CLASS_HUMIDITY,
+    STATE_CLASS_MEASUREMENT,
+    SensorEntity
 )
 
 from .const import (
@@ -21,14 +23,16 @@ from .const import (
     LOGGER
 )
 
+_LOGGER = logging.getLogger(__name__)
 
 SENSOR_TYPES = {
-    "temperature": [TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, "-T", "(T)"],
-    "humidity": [PERCENTAGE, DEVICE_CLASS_HUMIDITY, "-H", "(H)"],
+    "temperature": [TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, "-T", "(T)", STATE_CLASS_MEASUREMENT],
+    "humidity": [PERCENTAGE, DEVICE_CLASS_HUMIDITY, "-H", "(H)", STATE_CLASS_MEASUREMENT],
 }
 
 async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities):
     """Set up entry."""
+    _LOGGER.debug("**** Calling async_setup_entry")
     entities = []
     scout_alarm = hass.data[DOMAIN]
     location_api = scout_alarm.location_api
@@ -52,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
     return True
 
 
-class ScoutSensor(Entity):
+class ScoutSensor(SensorEntity):
     def __init__(self, device, data_key, location_api, config_entry):
         self._device = device
         self._data_key = data_key
@@ -83,8 +87,17 @@ class ScoutSensor(Entity):
         )
 
     @property
-    def state(self):
-        """Return the state of the sensor."""
+    def state_class(self):
+        """Return the state class of this entity."""
+        return (
+            SENSOR_TYPES.get(self._data_key)[4]
+            if self._data_key in SENSOR_TYPES
+            else None
+        )
+
+    @property
+    def native_value(self):
+        """Return the value of the sensor in its native measurement (unconverted)."""
         return (
             round(self._device['reported']['temperature'].get('degrees'))
             if self._data_key == 'temperature'
@@ -92,7 +105,7 @@ class ScoutSensor(Entity):
         )
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         """Return the unit of measurement of this entity."""
         try:
             return SENSOR_TYPES.get(self._data_key)[0]
