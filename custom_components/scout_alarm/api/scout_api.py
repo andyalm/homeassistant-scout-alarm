@@ -47,7 +47,7 @@ class ScoutApi:
             headers['Content-Type'] = 'application/json'
 
         async with aiohttp.ClientSession() as http_session:
-            async with http_session.request(method, f'{self.session.base_url}/{path}', headers=headers, data=serialized_body) as response:
+            async with http_session.request(method, f'{self.session.base_url}{path}', headers=headers, data=serialized_body) as response:
                 LOGGER.info(f'{method} {path} returned {response.status}')
                 return await response.json()
 
