@@ -63,24 +63,30 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
     devices = await location_api.get_devices()
     for d in devices:
       type = d['type']
+      name = d['name']
       if type in SUPPORTED_SCOUT_DEVICE_TYPES:
         """Create two devices if this is a combo smoke/co device"""
+        LOGGER.info(f'creating binary sensor for {type} named {name}')
         if type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
           trigger = d['reported']['trigger']
-          if trigger['state'].get('smoke'):
+          state = trigger['state']
+          if state.get('smoke'):
             entities.append(
               ScoutDoorWindowSensor(d, SCOUT_DEVICE_TYPE_SMOKE_ALARM, scout_alarm.location_api, scout_alarm.listener)
             )
-          if trigger['state'].get('co'):
+          elif state.get('co'):
             entities.append(
               ScoutDoorWindowSensor(d, SCOUT_DEVICE_TYPE_CO_DETECTOR, scout_alarm.location_api, scout_alarm.listener)
             )
+          else:
+            LOGGER.warn(f'Cannot determine smoke detector type.  Device data: {d}')
         else:
           entities.append(
             ScoutDoorWindowSensor(d, type, scout_alarm.location_api, scout_alarm.listener)
           )
+      else:
+        LOGGER.warn(f'Invalid binary sensor type: {type}.  Device data: {d}')
 
-    """Set up Scout Alarm control panel device."""
     async_add_entities(
         entities, False
     )
@@ -113,7 +119,10 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
 
     @property
     def available(self) -> bool:
-        return self._device['reported'].get('timedout') is not True
+        if self._device.get('reported'):
+            return self._device['reported'].get('timedout') is not True
+        else:
+            return True
 
     @property
     def is_on(self):
@@ -170,7 +179,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         return False
 
     @property
-    def extra_state_attributes(self):
+    def device_state_attributes(self):
         """Return the state attributes."""
         battery = self._device['reported'].get('battery')
         return {
@@ -193,8 +202,12 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
 
     async def async_update(self):
         """Update device state."""
-        LOGGER.info(f'scout_alarm device {self.name} updating...')
-        self._device = await self._api.get_device(self._device['id'])
+        updated_data = await self._api.get_device(self._device['id'])
+        LOGGER.debug(f'{self.name} updating with new Device data: {updated_data}')
+        if updated_data.get('status') != 429:
+            self._device = updated_data
+        else:
+            LOGGER.warn(f'rate-limited exceeded when updating {self.name}')
 
     def reported_trigger(self):
         reported = self._device.get('reported')
@@ -205,4 +218,6 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
 
     def __on_device_change(self, data):
         if data['id'] == self._device['id']:
-            self.schedule_update_ha_state(force_refresh=True)
+            LOGGER.debug(f'{self.name} device change with new Device data: {data}')
+            self._device = data
+            self.schedule_update_ha_state(force_refresh=False)

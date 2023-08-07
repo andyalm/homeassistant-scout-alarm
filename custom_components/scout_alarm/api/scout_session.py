@@ -30,7 +30,7 @@ class ScoutSession:
             async with http_session.post(f'{self.base_url}/auth/pusher',
                                          data=f"socket_id={socket_id}&channel_name={channel_name}",
                                          headers=headers) as response:
-                LOGGER.info(f'POST /auth/pusher returned {response.status}')
+                LOGGER.debug(f'POST /auth/pusher returned {response.status}')
                 return (await response.json())['auth']
 
     async def __get_fresh_jwt(self):
@@ -48,5 +48,5 @@ class ScoutSession:
             async with http_session.post(f'{self.base_url}/auth',
                                          data=json.dumps(body),
                                          headers=headers) as response:
-                LOGGER.info(f'POST /auth returned {response.status}')
+                LOGGER.debug(f'POST /auth returned {response.status}')
                 return (await response.json())['jwt']

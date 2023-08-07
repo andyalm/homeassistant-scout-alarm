@@ -13,7 +13,7 @@ class ScoutListener:
         self.session = session
         self._loop = loop
 
-        self.pusher = pysher.Pusher(self.api_key, log_level=logging.INFO)
+        self.pusher = pysher.Pusher(self.api_key, log_level=logging.WARN)
         self.socket_id = None
         self._mode_handlers = []
         self._device_handlers = []
@@ -39,13 +39,13 @@ class ScoutListener:
         channel = self.pusher.subscribe(channel_name, auth=channel_token)
 
         def mode_change(payload):
-            LOGGER.info(f"mode changed: {payload}")
+            LOGGER.debug(f"mode changed: {payload}")
             data = json.loads(payload)
             for handler in self._mode_handlers:
                 handler(data)
 
         def device_change(payload):
-            LOGGER.info(f"device change: {payload}")
+            LOGGER.debug(f"device change: {payload}")
             data = json.loads(payload)
             for handler in self._device_handlers:
                 handler(data)

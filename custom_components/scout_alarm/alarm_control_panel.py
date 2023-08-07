@@ -179,7 +179,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             mode = next((m for m in self._modes if m['id'] == expected_state['mode_id']), None)
             num_retries = 0
             while mode and mode['state'] != expected_state['event']:
-                LOGGER.info(f"Retrieved state from api did not match the state from the last mode event (last event: '{expected_state['event']}', retrieved state: '{mode['state']}', retries: {num_retries})")
+                LOGGER.warn(f"Retrieved state from api did not match the state from the last mode event (last event: '{expected_state['event']}', retrieved state: '{mode['state']}', retries: {num_retries})")
                 await asyncio.sleep(1)
                 num_retries += 1
                 self._modes = await self._api.get_modes()
@@ -197,7 +197,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         return self._location['name']
 
     @property
-    def extra_state_attributes(self):
+    def device_state_attributes(self):
         """Return the state attributes."""
         mode = self.mode()
 
