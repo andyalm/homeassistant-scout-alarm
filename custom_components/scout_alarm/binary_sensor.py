@@ -179,7 +179,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         return False
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         battery = self._device['reported'].get('battery')
         return {

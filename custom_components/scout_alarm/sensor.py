@@ -23,7 +23,7 @@ from .const import (
     LOGGER
 )
 
-""" polling is limited to every 10 minutes to avoid being rate-limited"""
+""" polling is limited to every 15 minutes to avoid being rate-limited"""
 from datetime import timedelta
 SCAN_INTERVAL = timedelta(seconds=900)
 
@@ -133,7 +133,7 @@ class ScoutSensor(SensorEntity):
         return False
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Return the state attributes."""
         battery = self._device['reported'].get('battery')
         return {
