@@ -23,6 +23,11 @@ from .const import (
     LOGGER
 )
 
+""" polling is limited to every 15 minutes to avoid being rate-limited"""
+from datetime import timedelta
+SCAN_INTERVAL = timedelta(seconds=900)
+
+
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_TYPES = {
@@ -32,7 +37,7 @@ SENSOR_TYPES = {
 
 async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities):
     """Set up entry."""
-    _LOGGER.debug("**** Calling async_setup_entry")
+    _LOGGER.debug("Calling async_setup_entry")
     entities = []
     scout_alarm = hass.data[DOMAIN]
     location_api = scout_alarm.location_api
@@ -40,13 +45,17 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
     devices = await location_api.get_devices()
 
     for d in devices:
-        """is the device a temp sensor?"""
+        type = d['type']
+        name = d['name']
+        """is the device a temperature sensor?"""
         if d['reported'].get('temperature'):
+            LOGGER.info(f'Creating temperature sensor: {name}')
             entities.append(
                 ScoutSensor(d, "temperature", scout_alarm.location_api, config_entry)
             )
         """is the device a humidity sensor?"""
         if d['reported'].get('humidity'):
+            LOGGER.info(f'Creating humidity sensor: {name}')
             entities.append(
                 ScoutSensor(d, "humidity", scout_alarm.location_api, config_entry)
             )
@@ -75,7 +84,10 @@ class ScoutSensor(SensorEntity):
 
     @property
     def available(self) -> bool:
-        return self._device['reported'].get('timedout') is not True
+        if self._device.get('reported'):
+            return self._device['reported'].get('timedout') is not True
+        else:
+            return True
 
     @property
     def device_class(self):
@@ -144,5 +156,9 @@ class ScoutSensor(SensorEntity):
 
     async def async_update(self):
         """Update device state."""
-        LOGGER.info(f'scout_alarm device {self.name} updating...')
-        self._device = await self._api.get_device(self._device['id'])
+        updated_data = await self._api.get_device(self._device['id'])
+        LOGGER.debug(f'{self.name} ({self._data_key}) updating with new Device data: {updated_data}')
+        if updated_data.get('status') != 429:
+            self._device = updated_data
+        else:
+            LOGGER.warn(f'rate-limited exceeded when updating {self.name} ({self._data_key})')
