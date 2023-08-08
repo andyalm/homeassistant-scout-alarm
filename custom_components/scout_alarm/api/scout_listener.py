@@ -1,9 +1,12 @@
-from .scout_session import ScoutSession
-from custom_components.scout_alarm.const import LOGGER
-import pysher
 import asyncio
 import json
 import logging
+
+import pysher
+
+from custom_components.scout_alarm.const import LOGGER
+
+from .scout_session import ScoutSession
 
 
 class ScoutListener:
@@ -34,8 +37,10 @@ class ScoutListener:
 
     async def __async_subscribe_location(self, location_id):
         LOGGER.info(f"subscribing to location #{location_id}...")
-        channel_name = f'private-{location_id}'
-        channel_token = await self.session.async_get_channel_token(self.socket_id, channel_name)
+        channel_name = f"private-{location_id}"
+        channel_token = await self.session.async_get_channel_token(
+            self.socket_id, channel_name
+        )
         channel = self.pusher.subscribe(channel_name, auth=channel_token)
 
         def mode_change(payload):
@@ -50,8 +55,8 @@ class ScoutListener:
             for handler in self._device_handlers:
                 handler(data)
 
-        channel.bind('mode', mode_change)
-        channel.bind('device', device_change)
+        channel.bind("mode", mode_change)
+        channel.bind("device", device_change)
 
         LOGGER.info(f"subscribed to location #{location_id}")
         return channel
@@ -61,17 +66,20 @@ class ScoutListener:
 
         def connect_handler(payload):
             data = json.loads(payload)
-            self.socket_id = data['socket_id']
-            LOGGER.info(f"Connected to scout_alarm pusher with socket_id '{self.socket_id}'")
+            self.socket_id = data["socket_id"]
+            LOGGER.info(
+                f"Connected to scout_alarm pusher with socket_id '{self.socket_id}'"
+            )
             # re-subscribe to any locations we've already subscribed to (to handle reconnects)
             for location_id in self._locations:
-                asyncio.run_coroutine_threadsafe(self.__async_subscribe_location(location_id), self._loop)
+                asyncio.run_coroutine_threadsafe(
+                    self.__async_subscribe_location(location_id), self._loop
+                )
 
             if not connected_future.done():
-                connected_future.set_result(data['socket_id'])
+                connected_future.set_result(data["socket_id"])
 
-        self.pusher.connection.bind('pusher:connection_established', connect_handler)
+        self.pusher.connection.bind("pusher:connection_established", connect_handler)
         self.pusher.connect()
 
         return connected_future
-

@@ -2,22 +2,21 @@
 
 import logging
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import (
     CONF_PASSWORD,
     CONF_USERNAME,
     STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_NIGHT,
+    STATE_ALARM_ARMED_CUSTOM_BYPASS,
     STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_ARMED_CUSTOM_BYPASS
+    STATE_ALARM_ARMED_NIGHT,
 )
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 
-from .const import DOMAIN, CONF_MODES, LOGGER
-
-from .api.scout_session import ScoutSession
 from .api.scout_api import ScoutApi, ScoutLocationApi
+from .api.scout_session import ScoutSession
+from .const import CONF_MODES, DOMAIN, LOGGER
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,7 +71,9 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         bypass_mode = user_input.get(STATE_ALARM_ARMED_CUSTOM_BYPASS)
 
         if not night_mode and not away_mode and not home_mode and not bypass_mode:
-            return await self._async_show_modes_form(errors={"base": "mode_mapping_required"})
+            return await self._async_show_modes_form(
+                errors={"base": "mode_mapping_required"}
+            )
 
         return self._create_entry(user_input)
 
@@ -91,30 +92,24 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_create_entry(
             title=f"{username}",
-            data={
-                CONF_USERNAME: username,
-                CONF_PASSWORD: password,
-                CONF_MODES: modes
-            }
+            data={CONF_USERNAME: username, CONF_PASSWORD: password, CONF_MODES: modes},
         )
 
     def _show_auth_form(self, errors={}):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_USERNAME): str,
-                    vol.Required(CONF_PASSWORD): str
-                }
+                {vol.Required(CONF_USERNAME): str, vol.Required(CONF_PASSWORD): str}
             ),
             description_placeholders={"docs_url": "scoutalarm.com"},
-            errors=errors)
+            errors=errors,
+        )
 
     def _create_entry(self, user_input):
         data = {
             CONF_USERNAME: self._username,
             CONF_PASSWORD: self._password,
-            CONF_MODES: user_input
+            CONF_MODES: user_input,
         }
 
         return self.async_create_entry(
@@ -137,10 +132,10 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(STATE_ALARM_ARMED_HOME): vol.In(scout_modes),
                     vol.Optional(STATE_ALARM_ARMED_AWAY): vol.In(scout_modes),
                     vol.Optional(STATE_ALARM_ARMED_NIGHT): vol.In(scout_modes),
-                    vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): vol.In(scout_modes)
+                    vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): vol.In(scout_modes),
                 }
             ),
-            errors=errors
+            errors=errors,
         )
 
     async def _async_get_scout_modes(self):
@@ -148,8 +143,4 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         location_api = ScoutLocationApi(api)
         modes = await location_api.get_modes()
 
-        return [m['name'] for m in modes]
-
-
-
-
+        return [m["name"] for m in modes]
