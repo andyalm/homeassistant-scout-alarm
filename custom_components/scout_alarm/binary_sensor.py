@@ -1,19 +1,10 @@
 import json
 
+from homeassistant.components.alexa.entities import BinarySensorCapabilities
 import homeassistant.components.binary_sensor as binary_sensor
-from homeassistant.components.binary_sensor import (
-    DEVICE_CLASS_DOOR,
-    DEVICE_CLASS_LOCK,
-    DEVICE_CLASS_MOISTURE,
-    DEVICE_CLASS_MOTION,
-    DEVICE_CLASS_OPENING,
-    DEVICE_CLASS_SAFETY,
-    DEVICE_CLASS_SMOKE,
-    DEVICE_CLASS_VIBRATION,
-    DEVICE_CLASS_WINDOW,
-)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import (
@@ -48,7 +39,7 @@ SUPPORTED_SCOUT_DEVICE_TYPES = [
 
 
 async def async_setup_entry(
-    hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
 ):
     """Set up entry."""
     entities = []
@@ -57,12 +48,12 @@ async def async_setup_entry(
 
     devices = await location_api.get_devices()
     for d in devices:
-        type = d["type"]
-        name = d["name"]
-        if type in SUPPORTED_SCOUT_DEVICE_TYPES:
-            """Create two devices if this is a combo smoke/co device"""
-            LOGGER.info(f"creating binary sensor for {type} named {name}")
-            if type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
+        _type = d["type"]
+        _name = d["name"]
+        if _type in SUPPORTED_SCOUT_DEVICE_TYPES:
+            # Create two devices if this is a combo smoke/co device
+            LOGGER.info(f"creating binary sensor for {_type} named {_name}")
+            if _type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
                 trigger = d["reported"]["trigger"]
                 state = trigger["state"]
                 if state.get("smoke"):
@@ -84,17 +75,17 @@ async def async_setup_entry(
                         )
                     )
                 else:
-                    LOGGER.warn(
+                    LOGGER.warning(
                         f"Cannot determine smoke detector type.  Device data: {d}"
                     )
             else:
                 entities.append(
                     ScoutDoorWindowSensor(
-                        d, type, scout_alarm.location_api, scout_alarm.listener
+                        d, _type, scout_alarm.location_api, scout_alarm.listener
                     )
                 )
         else:
-            LOGGER.warn(f"Invalid binary sensor type: {type}.  Device data: {d}")
+            LOGGER.warning(f"Invalid binary sensor type: {_type}.  Device data: {d}")
 
     async_add_entities(entities, False)
 
@@ -102,9 +93,9 @@ async def async_setup_entry(
 
 
 class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
-    def __init__(self, device, type, location_api, listener):
+    def __init__(self, device, _type, location_api, listener) -> None:
         self._device = device
-        self._type = type
+        self._type = _type
         self._api = location_api
         self._listener = listener
         self._listener.on_device_change(self.__on_device_change)
@@ -113,12 +104,12 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
     def unique_id(self):
         device_type = self._type
         if device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
-            id = self._device["id"] + "-SA"
+            _id = self._device["id"] + "-SA"
         elif device_type == SCOUT_DEVICE_TYPE_CO_DETECTOR:
-            id = self._device["id"] + "-CO"
+            _id = self._device["id"] + "-CO"
         else:
-            id = self._device["id"]
-        return id
+            _id = self._device["id"]
+        return _id
 
     @property
     def name(self):
@@ -161,25 +152,25 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
     def device_class(self):
         device_type = self._type
         if device_type == SCOUT_DEVICE_TYPE_DOOR_PANEL:
-            return DEVICE_CLASS_DOOR
+            return binary_sensor.BinarySensorDeviceClass.DOOR
         elif device_type == SCOUT_DEVICE_TYPE_SMOKE_ALARM:
-            return DEVICE_CLASS_SMOKE
+            return binary_sensor.BinarySensorDeviceClass.SMOKE
         elif device_type == SCOUT_DEVICE_TYPE_CO_DETECTOR:
-            return DEVICE_CLASS_SAFETY
+            return binary_sensor.BinarySensorDeviceClass.SAFETY
         elif device_type == SCOUT_DEVICE_TYPE_MOTION_SENSOR:
-            return DEVICE_CLASS_MOTION
+            return binary_sensor.BinarySensorDeviceClass.MOTION
         elif device_type == SCOUT_DEVICE_TYPE_WATER_SENSOR:
-            return DEVICE_CLASS_MOISTURE
+            return binary_sensor.BinarySensorDeviceClass.MOISTURE
         elif device_type == SCOUT_DEVICE_TYPE_GLASS_BREAK:
-            return DEVICE_CLASS_VIBRATION
+            return binary_sensor.BinarySensorDeviceClass.VIBRATION
         elif device_type == SCOUT_DEVICE_TYPE_DOOR_LOCK:
-            return DEVICE_CLASS_LOCK
+            return binary_sensor.BinarySensorDeviceClass.LOCK
         elif "door" in self._device["name"].lower():
-            return DEVICE_CLASS_DOOR
+            return binary_sensor.BinarySensorDeviceClass.DOOR
         elif "window" in self._device["name"].lower():
-            return DEVICE_CLASS_WINDOW
+            return binary_sensor.BinarySensorDeviceClass.WINDOW
         else:
-            return DEVICE_CLASS_OPENING
+            return binary_sensor.BinarySensorDeviceClass.OPENING
 
     @property
     def should_poll(self) -> bool:
@@ -214,7 +205,7 @@ class ScoutDoorWindowSensor(binary_sensor.BinarySensorEntity):
         if updated_data.get("status") != 429:
             self._device = updated_data
         else:
-            LOGGER.warn(f"rate-limited exceeded when updating {self.name}")
+            LOGGER.warning(f"rate-limited exceeded when updating {self.name}")
 
     def reported_trigger(self):
         reported = self._device.get("reported")

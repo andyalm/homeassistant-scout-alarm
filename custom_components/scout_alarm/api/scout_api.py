@@ -8,7 +8,7 @@ from .scout_session import ScoutSession
 
 
 class ScoutApi:
-    def __init__(self, session: ScoutSession):
+    def __init__(self, session: ScoutSession) -> None:
         self.session = session
 
     async def get_current_member(self):
@@ -55,7 +55,7 @@ class ScoutApi:
 
 
 class ScoutLocationApi:
-    def __init__(self, api: ScoutApi):
+    def __init__(self, api: ScoutApi) -> None:
         self.__api = api
         self.__current_member = None
         self.__current_location = None
@@ -77,7 +77,7 @@ class ScoutLocationApi:
 
         current_member = await self.__async_current_member()
         locations = await self.__api.get_member_locations(current_member["id"])
-        # TODO support multiple locations
+        # TODO support multiple locations # pylint: disable=fixme
         self.__current_location = locations[0]
         return self.__current_location
 

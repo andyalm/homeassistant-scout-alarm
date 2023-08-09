@@ -8,7 +8,7 @@ from custom_components.scout_alarm.const import LOGGER
 class ScoutSession:
     base_url = "https://api.scoutalarm.com"
 
-    def __init__(self, username, password):
+    def __init__(self, username, password) -> None:
         self._username = username
         self._password = password
         self._jwt = None

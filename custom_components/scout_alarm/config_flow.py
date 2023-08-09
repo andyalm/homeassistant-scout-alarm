@@ -27,7 +27,7 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize flow"""
         self._session = None
         self._username = None
@@ -36,7 +36,6 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         errors = {}
-        LOGGER.info("async_step_user called")
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
@@ -60,8 +59,6 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_modes()
 
     async def async_step_modes(self, user_input=None):
-        LOGGER.info("async_step_modes called")
-
         if not user_input:
             return await self._async_show_modes_form()
 

@@ -1,47 +1,43 @@
-import json
+# polling is limited to every 15 minutes to avoid being rate-limited
+from datetime import timedelta
 import logging
 
-import homeassistant.components.sensor as sensor
 from homeassistant.components.sensor import (
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_TEMPERATURE,
-    STATE_CLASS_MEASUREMENT,
+    SensorDeviceClass,
     SensorEntity,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ATTRIBUTION, PERCENTAGE, TEMP_CELSIUS
+from homeassistant.const import ATTR_ATTRIBUTION, PERCENTAGE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import ATTRIBUTION, DOMAIN, LOGGER
 
-""" polling is limited to every 15 minutes to avoid being rate-limited"""
-from datetime import timedelta
-
 SCAN_INTERVAL = timedelta(seconds=900)
-
 
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_TYPES = {
     "temperature": [
-        TEMP_CELSIUS,
-        DEVICE_CLASS_TEMPERATURE,
+        UnitOfTemperature.CELSIUS,
+        SensorDeviceClass.TEMPERATURE,
         "-T",
         "(T)",
-        STATE_CLASS_MEASUREMENT,
+        SensorStateClass.MEASUREMENT,
     ],
     "humidity": [
         PERCENTAGE,
-        DEVICE_CLASS_HUMIDITY,
+        SensorDeviceClass.HUMIDITY,
         "-H",
         "(H)",
-        STATE_CLASS_MEASUREMENT,
+        SensorStateClass.MEASUREMENT,
     ],
 }
 
 
 async def async_setup_entry(
-    hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
 ):
     """Set up entry."""
     _LOGGER.debug("Calling async_setup_entry")
@@ -52,17 +48,16 @@ async def async_setup_entry(
     devices = await location_api.get_devices()
 
     for d in devices:
-        type = d["type"]
-        name = d["name"]
-        """is the device a temperature sensor?"""
+        _name = d["name"]
+        # is the device a temperature sensor?
         if d["reported"].get("temperature"):
-            LOGGER.info(f"Creating temperature sensor: {name}")
+            LOGGER.info(f"Creating temperature sensor: {_name}")
             entities.append(
                 ScoutSensor(d, "temperature", scout_alarm.location_api, config_entry)
             )
-        """is the device a humidity sensor?"""
+        # is the device a humidity sensor?
         if d["reported"].get("humidity"):
-            LOGGER.info(f"Creating humidity sensor: {name}")
+            LOGGER.info(f"Creating humidity sensor: {_name}")
             entities.append(
                 ScoutSensor(d, "humidity", scout_alarm.location_api, config_entry)
             )
@@ -73,7 +68,7 @@ async def async_setup_entry(
 
 
 class ScoutSensor(SensorEntity):
-    def __init__(self, device, data_key, location_api, config_entry):
+    def __init__(self, device, data_key, location_api, config_entry) -> None:
         self._device = device
         self._data_key = data_key
         self._api = location_api
@@ -170,6 +165,6 @@ class ScoutSensor(SensorEntity):
         if updated_data.get("status") != 429:
             self._device = updated_data
         else:
-            LOGGER.warn(
+            LOGGER.warning(
                 f"rate-limited exceeded when updating {self.name} ({self._data_key})"
             )

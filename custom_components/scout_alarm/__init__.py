@@ -60,8 +60,6 @@ async def async_setup(hass: HomeAssistant, config):
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-    LOGGER.info("async_setup_entry from __init__ called")
-
     username = config_entry.data[CONF_USERNAME]
     password = config_entry.data[CONF_PASSWORD]
     mode_map = config_entry.data[CONF_MODES]
@@ -78,21 +76,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     return True
 
 
-# class ScoutAlarmConfigFlow(ConfigFlow, domain=DOMAIN):
-#     async def async_step_user(self, info):
-#         if info is not None:
-#             pass  # TODO: process info
-#
-#         await self._async_handle_discovery_without_unique_id()
-#
-#         return self.async_show_form(
-#             #step_id="user", data_schema=vol.Schema({vol.Required("password"): str})
-#             step_id="zeroconf"
-#         )
-
-
 class ScoutAlarm:
-    def __init__(self, username, password, state_to_mode_map, hass):
+    def __init__(
+        self, username, password, state_to_mode_map, hass: HomeAssistant
+    ) -> None:
         self.session = ScoutSession(username, password)
         self.api = ScoutApi(self.session)
         self.location_api = ScoutLocationApi(self.api)

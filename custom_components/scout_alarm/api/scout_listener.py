@@ -12,7 +12,7 @@ from .scout_session import ScoutSession
 class ScoutListener:
     api_key = "baf06f5a867d462e09d4"
 
-    def __init__(self, session: ScoutSession, loop):
+    def __init__(self, session: ScoutSession, loop) -> None:
         self.session = session
         self._loop = loop
 
