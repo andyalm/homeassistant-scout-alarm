@@ -1,0 +1,7 @@
+colorlog==6.7.0
+homeassistant==2023.5.3
+pip>=21.0,<23.2
+ruff==0.0.285
+pytest
+pytest-cov==2.9.0
+pytest-homeassistant-custom-component

@@ -1,4 +1,23 @@
+# artifacts
+__pycache__
+.pytest*
+*.egg-info
+*/build/*
+*/dist/*
 deploy.sh
 debug.sh
 .idea/
-**/__pycache__
+__pycache__/
+
+
+# misc
+.coverage
+.vscode
+coverage.xml
+
+
+# Home Assistant configuration
+config/*
+!config/configuration.yaml
+
+.DS_Store
