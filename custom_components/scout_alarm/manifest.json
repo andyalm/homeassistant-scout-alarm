@@ -1,20 +1,11 @@
 {
-  "domain": "scout_alarm",
-  "name": "Scout Alarm",
   "version": "0.5.0",
-  "codeowners": [
-    "@andyalm",
-    "@jakecolman"
-  ],
-  "dependencies": [],
+  "codeowners": ["@andyalm"],
   "config_flow": true,
-  "iot_class": "cloud_polling",
-  "integration_type": "hub",
+  "dependencies": [],
   "documentation": "https://github.com/andyalm/homeassistant-scout-alarm",
   "issue_tracker": "https://github.com/andyalm/homeassistant-scout-alarm/issues",
-  "requirements": [
-    "aiohttp",
-    "pysher==1.0.6",
-    "websocket-client==0.57.0"
-  ]
+  "domain": "scout_alarm",
+  "name": "Scout Alarm",
+  "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"]
 }
