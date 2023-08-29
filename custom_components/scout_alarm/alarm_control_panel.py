@@ -1,7 +1,6 @@
 """Support for Scout Alarm Security System alarm control panels."""
 import asyncio
 import json
-from typing import Dict
 
 import homeassistant.components.alarm_control_panel as alarm
 from homeassistant.components.alarm_control_panel import (
@@ -34,7 +33,6 @@ from .const import (
     SCOUT_MODE_ALARMED,
     SCOUT_MODE_ARMED,
     SCOUT_MODE_ARMING,
-    SCOUT_MODE_DISARMED,
     SCOUT_MODE_EVENT_DISMISSED,
     SCOUT_MODE_EVENT_TRIGGERED,
 )
@@ -46,7 +44,7 @@ async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
 ):
     """Set up entry."""
-    username = config_entry.data[CONF_USERNAME]
+    config_entry.data[CONF_USERNAME]
     scout_alarm = hass.data[DOMAIN]
     async_add_entities(
         [

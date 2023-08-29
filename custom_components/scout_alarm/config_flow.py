@@ -1,6 +1,8 @@
-"""Config flow to configure Scout Alarm integration"""
+"""Config flow to configure Scout Alarm integration."""
 
 import logging
+
+import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import (
@@ -11,12 +13,10 @@ from homeassistant.const import (
     STATE_ALARM_ARMED_HOME,
     STATE_ALARM_ARMED_NIGHT,
 )
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 
 from .api.scout_api import ScoutApi, ScoutLocationApi
 from .api.scout_session import ScoutSession
-from .const import CONF_MODES, DOMAIN, LOGGER
+from .const import CONF_MODES, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_PUSH
 
     def __init__(self) -> None:
-        """Initialize flow"""
+        """Initialize flow."""
         self._session = None
         self._username = None
         self._password = None

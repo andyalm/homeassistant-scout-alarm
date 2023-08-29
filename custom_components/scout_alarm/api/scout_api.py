@@ -1,7 +1,6 @@
 import json
 
 import aiohttp
-
 from custom_components.scout_alarm.const import LOGGER
 
 from .scout_session import ScoutSession
@@ -43,15 +42,14 @@ class ScoutApi:
             serialized_body = json.dumps(body)
             headers["Content-Type"] = "application/json"
 
-        async with aiohttp.ClientSession() as http_session:
-            async with http_session.request(
-                method,
-                f"{self.session.base_url}{path}",
-                headers=headers,
-                data=serialized_body,
-            ) as response:
-                LOGGER.debug(f"{method} {path} returned {response.status}")
-                return await response.json()
+        async with aiohttp.ClientSession() as http_session, http_session.request(
+            method,
+            f"{self.session.base_url}{path}",
+            headers=headers,
+            data=serialized_body,
+        ) as response:
+            LOGGER.debug(f"{method} {path} returned {response.status}")
+            return await response.json()
 
 
 class ScoutLocationApi:

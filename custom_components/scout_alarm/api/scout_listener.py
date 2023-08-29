@@ -2,9 +2,8 @@ import asyncio
 import json
 import logging
 
-import pysher
-
 from custom_components.scout_alarm.const import LOGGER
+import pysher
 
 from .scout_session import ScoutSession
 

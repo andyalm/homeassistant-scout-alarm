@@ -1,17 +1,13 @@
-import json
 
-from homeassistant.components.alexa.entities import BinarySensorCapabilities
-import homeassistant.components.binary_sensor as binary_sensor
+from homeassistant.components import binary_sensor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import (
     ATTRIBUTION,
     DOMAIN,
     LOGGER,
-    SCOUT_DEVICE_STATE_LOCKED,
     SCOUT_DEVICE_STATE_MOTION_START,
     SCOUT_DEVICE_STATE_OK,
     SCOUT_DEVICE_STATE_OPEN,

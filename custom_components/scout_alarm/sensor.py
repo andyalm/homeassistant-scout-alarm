@@ -10,7 +10,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ATTRIBUTION, PERCENTAGE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import HomeAssistantType
 
 from .const import ATTRIBUTION, DOMAIN, LOGGER
 
@@ -76,12 +75,12 @@ class ScoutSensor(SensorEntity):
 
     @property
     def unique_id(self):
-        """Return the unique ID which is the device ID with an appropriate suffix to make it unique"""
+        """Return the unique ID which is the device ID with an appropriate suffix to make it unique."""
         return self._device["id"] + SENSOR_TYPES.get(self._data_key)[2]
 
     @property
     def name(self):
-        """Return the device name, including the type as a prefix"""
+        """Return the device name, including the type as a prefix."""
         return self._device["name"]
 
     @property

@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+import voluptuous as vol
+
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
     CONF_PASSWORD,
@@ -11,12 +13,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
 
 from .api.scout_api import ScoutApi, ScoutLocationApi
 from .api.scout_listener import ScoutListener
 from .api.scout_session import ScoutSession
-from .const import CONF_MODES, DATA_SCOUT_CONFIG, DOMAIN, LOGGER
+from .const import CONF_MODES, DATA_SCOUT_CONFIG, DOMAIN
 
 CONFIG_SCHEMA = vol.Schema(
     {
