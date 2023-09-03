@@ -1,32 +1,25 @@
+"""Support for Scout Alarm Security System."""
+
 from copy import deepcopy
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import (
-    SOURCE_IMPORT,
-    ConfigEntry
-)
-
-from .const import (
-    DOMAIN,
-    LOGGER,
-    DATA_SCOUT_CONFIG,
-    CONF_MODES
-)
-
-from homeassistant.const import (
-    CONF_USERNAME,
-    CONF_PASSWORD,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_NIGHT,
-    STATE_ALARM_ARMED_CUSTOM_BYPASS
-)
 
 import voluptuous as vol
+
+from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    STATE_ALARM_ARMED_AWAY,
+    STATE_ALARM_ARMED_CUSTOM_BYPASS,
+    STATE_ALARM_ARMED_HOME,
+    STATE_ALARM_ARMED_NIGHT,
+)
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 
 from .api.scout_api import ScoutApi, ScoutLocationApi
-from .api.scout_session import ScoutSession
 from .api.scout_listener import ScoutListener
+from .api.scout_session import ScoutSession
+from .const import CONF_MODES, DATA_SCOUT_CONFIG, DOMAIN
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -39,20 +32,16 @@ CONFIG_SCHEMA = vol.Schema(
                         vol.Optional(STATE_ALARM_ARMED_AWAY): cv.string,
                         vol.Optional(STATE_ALARM_ARMED_HOME): cv.string,
                         vol.Optional(STATE_ALARM_ARMED_NIGHT): cv.string,
-                        vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): cv.string
+                        vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): cv.string,
                     }
-                )
+                ),
             }
         )
     },
     extra=vol.ALLOW_EXTRA,
 )
 
-SCOUT_PLATFORMS = [
-    'alarm_control_panel',
-    'binary_sensor',
-    'sensor'
-]
+SCOUT_PLATFORMS = ["alarm_control_panel", "binary_sensor", "sensor"]
 
 
 async def async_setup(hass: HomeAssistant, config):
@@ -65,17 +54,16 @@ async def async_setup(hass: HomeAssistant, config):
     hass.data[DATA_SCOUT_CONFIG] = scout_config
 
     hass.async_create_task(
-       hass.config_entries.flow.async_init(
-           DOMAIN, context={"source": SOURCE_IMPORT}, data=deepcopy(scout_config)
-       )
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}, data=deepcopy(scout_config)
+        )
     )
 
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-    LOGGER.info("async_setup_entry from __init__ called")
-
+    """Set up entry."""
     username = config_entry.data[CONF_USERNAME]
     password = config_entry.data[CONF_PASSWORD]
     mode_map = config_entry.data[CONF_MODES]
@@ -92,20 +80,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     return True
 
 
-# class ScoutAlarmConfigFlow(ConfigFlow, domain=DOMAIN):
-#     async def async_step_user(self, info):
-#         if info is not None:
-#             pass  # TODO: process info
-#
-#         await self._async_handle_discovery_without_unique_id()
-#
-#         return self.async_show_form(
-#             #step_id="user", data_schema=vol.Schema({vol.Required("password"): str})
-#             step_id="zeroconf"
-#         )
-
 class ScoutAlarm:
-    def __init__(self, username, password, state_to_mode_map, hass):
+    """Represents the integration."""
+
+    def __init__(
+        self, username, password, state_to_mode_map, hass: HomeAssistant
+    ) -> None:
+        """Initialize the integration."""
         self.session = ScoutSession(username, password)
         self.api = ScoutApi(self.session)
         self.location_api = ScoutLocationApi(self.api)

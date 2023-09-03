@@ -1,41 +1,46 @@
-import json
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.typing import HomeAssistantType
-import homeassistant.components.sensor as sensor
+"""Support for Scout Alarm Security System."""
+
+from datetime import timedelta
 import logging
 
-from homeassistant.const import (
-    ATTR_ATTRIBUTION,
-    PERCENTAGE,
-    TEMP_CELSIUS
-)
-
 from homeassistant.components.sensor import (
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_HUMIDITY,
-    STATE_CLASS_MEASUREMENT,
-    SensorEntity
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ATTRIBUTION, PERCENTAGE, UnitOfTemperature
+from homeassistant.core import HomeAssistant
 
-from .const import (
-    ATTRIBUTION,
-    DOMAIN,
-    LOGGER
-)
+from .const import ATTRIBUTION, DOMAIN, LOGGER
 
-""" polling is limited to every 15 minutes to avoid being rate-limited"""
-from datetime import timedelta
-SCAN_INTERVAL = timedelta(seconds=900)
-
+SCAN_INTERVAL = timedelta(
+    seconds=900
+)  # limit polling to 15 minutes to avoid being rate-limited
 
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_TYPES = {
-    "temperature": [TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, "-T", "(T)", STATE_CLASS_MEASUREMENT],
-    "humidity": [PERCENTAGE, DEVICE_CLASS_HUMIDITY, "-H", "(H)", STATE_CLASS_MEASUREMENT],
+    "temperature": [
+        UnitOfTemperature.CELSIUS,
+        SensorDeviceClass.TEMPERATURE,
+        "-T",
+        "(T)",
+        SensorStateClass.MEASUREMENT,
+    ],
+    "humidity": [
+        PERCENTAGE,
+        SensorDeviceClass.HUMIDITY,
+        "-H",
+        "(H)",
+        SensorStateClass.MEASUREMENT,
+    ],
 }
 
-async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, async_add_entities):
+
+async def async_setup_entry(
+    hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
+):
     """Set up entry."""
     _LOGGER.debug("Calling async_setup_entry")
     entities = []
@@ -45,17 +50,17 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
     devices = await location_api.get_devices()
 
     for d in devices:
-        type = d['type']
-        name = d['name']
-        """is the device a temperature sensor?"""
-        if d['reported'].get('temperature'):
-            LOGGER.info(f'Creating temperature sensor: {name}')
+        LOGGER.debug("Found device: %s", d)
+        _name = d["name"]
+        # is the device a temperature sensor?
+        if d["reported"].get("temperature"):
+            LOGGER.debug("Creating temperature sensor: %s", _name)
             entities.append(
                 ScoutSensor(d, "temperature", scout_alarm.location_api, config_entry)
             )
-        """is the device a humidity sensor?"""
-        if d['reported'].get('humidity'):
-            LOGGER.info(f'Creating humidity sensor: {name}')
+        # is the device a humidity sensor?
+        if d["reported"].get("humidity"):
+            LOGGER.debug("Creating humidity sensor: %s", _name)
             entities.append(
                 ScoutSensor(d, "humidity", scout_alarm.location_api, config_entry)
             )
@@ -66,7 +71,10 @@ async def async_setup_entry(hass: HomeAssistantType, config_entry: ConfigEntry, 
 
 
 class ScoutSensor(SensorEntity):
-    def __init__(self, device, data_key, location_api, config_entry):
+    """Representation of the Scout Sensor."""
+
+    def __init__(self, device, data_key, location_api, config_entry) -> None:
+        """Initialize the sensor."""
         self._device = device
         self._data_key = data_key
         self._api = location_api
@@ -74,18 +82,19 @@ class ScoutSensor(SensorEntity):
 
     @property
     def unique_id(self):
-        """Return the unique ID which is the device ID with an appropriate suffix to make it unique"""
-        return self._device['id'] + SENSOR_TYPES.get(self._data_key)[2]
+        """Return the unique ID which is the device ID with an appropriate suffix to make it unique."""
+        return self._device["id"] + SENSOR_TYPES.get(self._data_key)[2]
 
     @property
     def name(self):
-        """Return the device name, including the type as a prefix"""
-        return self._device['name']
+        """Return the device name, including the type as a prefix."""
+        return self._device["name"]
 
     @property
     def available(self) -> bool:
-        if self._device.get('reported'):
-            return self._device['reported'].get('timedout') is not True
+        """Return whether the sensor is available."""
+        if self._device.get("reported"):
+            return self._device["reported"].get("timedout") is not True
         else:
             return True
 
@@ -111,9 +120,9 @@ class ScoutSensor(SensorEntity):
     def native_value(self):
         """Return the value of the sensor in its native measurement (unconverted)."""
         return (
-            round(self._device['reported']['temperature'].get('degrees'))
-            if self._data_key == 'temperature'
-            else self._device['reported']['humidity'].get('percent')
+            round(self._device["reported"]["temperature"].get("degrees"))
+            if self._data_key == "temperature"
+            else self._device["reported"]["humidity"].get("percent")
         )
 
     @property
@@ -126,39 +135,50 @@ class ScoutSensor(SensorEntity):
 
     @property
     def should_poll(self) -> bool:
-        return  True
+        """Return whether the sensor should poll."""
+        return True
 
     @property
     def force_update(self) -> bool:
+        """Return whether thes sensor should force an update."""
         return False
 
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        battery = self._device['reported'].get('battery')
+        battery = self._device["reported"].get("battery")
         return {
             ATTR_ATTRIBUTION: ATTRIBUTION,
-            "device_id": self._device['id'],
-            "device_type": self._device['type'],
-            "battery_low": battery.get('low') if battery else False
+            "device_id": self._device["id"],
+            "device_type": self._device["type"],
+            "battery_low": battery.get("low") if battery else False,
         }
 
     @property
     def device_info(self):
         """Return device registry information for this entity."""
         return {
-            "identifiers": {(DOMAIN, self._device['id'])},
-            "manufacturer": self._device['reported'].get('manufacturer'),
+            "identifiers": {(DOMAIN, self._device["id"])},
+            "manufacturer": self._device["reported"].get("manufacturer"),
             "name": self.name,
-            "sw_version": self._device['reported'].get('fw_version'),
-            "model": self._device['reported'].get('model')
+            "sw_version": self._device["reported"].get("fw_version"),
+            "model": self._device["reported"].get("model"),
         }
 
     async def async_update(self):
         """Update device state."""
-        updated_data = await self._api.get_device(self._device['id'])
-        LOGGER.debug(f'{self.name} ({self._data_key}) updating with new Device data: {updated_data}')
-        if updated_data.get('status') != 429:
+        updated_data = await self._api.get_device(self._device["id"])
+        LOGGER.debug(
+            "%s (%s) updating with new Device data: %s",
+            self.name,
+            self._data_key,
+            updated_data,
+        )
+        if updated_data.get("status") != 429:
             self._device = updated_data
         else:
-            LOGGER.warn(f'rate-limited exceeded when updating {self.name} ({self._data_key})')
+            LOGGER.warning(
+                "Rate-limited exceeded when updating %s (%s)",
+                self.name,
+                self._data_key,
+            )
