@@ -1,4 +1,5 @@
-# polling is limited to every 15 minutes to avoid being rate-limited
+"""Support for Scout Alarm Security System."""
+
 from datetime import timedelta
 import logging
 
@@ -13,7 +14,9 @@ from homeassistant.core import HomeAssistant
 
 from .const import ATTRIBUTION, DOMAIN, LOGGER
 
-SCAN_INTERVAL = timedelta(seconds=900)
+SCAN_INTERVAL = timedelta(
+    seconds=900
+)  # limit polling to 15 minutes to avoid being rate-limited
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,16 +50,17 @@ async def async_setup_entry(
     devices = await location_api.get_devices()
 
     for d in devices:
+        LOGGER.debug("Found device: %s", d)
         _name = d["name"]
         # is the device a temperature sensor?
         if d["reported"].get("temperature"):
-            LOGGER.info(f"Creating temperature sensor: {_name}")
+            LOGGER.debug("Creating temperature sensor: %s", _name)
             entities.append(
                 ScoutSensor(d, "temperature", scout_alarm.location_api, config_entry)
             )
         # is the device a humidity sensor?
         if d["reported"].get("humidity"):
-            LOGGER.info(f"Creating humidity sensor: {_name}")
+            LOGGER.debug("Creating humidity sensor: %s", _name)
             entities.append(
                 ScoutSensor(d, "humidity", scout_alarm.location_api, config_entry)
             )
@@ -67,7 +71,10 @@ async def async_setup_entry(
 
 
 class ScoutSensor(SensorEntity):
+    """Representation of the Scout Sensor."""
+
     def __init__(self, device, data_key, location_api, config_entry) -> None:
+        """Initialize the sensor."""
         self._device = device
         self._data_key = data_key
         self._api = location_api
@@ -85,6 +92,7 @@ class ScoutSensor(SensorEntity):
 
     @property
     def available(self) -> bool:
+        """Return whether the sensor is available."""
         if self._device.get("reported"):
             return self._device["reported"].get("timedout") is not True
         else:
@@ -127,10 +135,12 @@ class ScoutSensor(SensorEntity):
 
     @property
     def should_poll(self) -> bool:
+        """Return whether the sensor should poll."""
         return True
 
     @property
     def force_update(self) -> bool:
+        """Return whether thes sensor should force an update."""
         return False
 
     @property
@@ -159,11 +169,16 @@ class ScoutSensor(SensorEntity):
         """Update device state."""
         updated_data = await self._api.get_device(self._device["id"])
         LOGGER.debug(
-            f"{self.name} ({self._data_key}) updating with new Device data: {updated_data}"
+            "%s (%s) updating with new Device data: %s",
+            self.name,
+            self._data_key,
+            updated_data,
         )
         if updated_data.get("status") != 429:
             self._device = updated_data
         else:
             LOGGER.warning(
-                f"rate-limited exceeded when updating {self.name} ({self._data_key})"
+                "Rate-limited exceeded when updating %s (%s)",
+                self.name,
+                self._data_key,
             )

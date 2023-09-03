@@ -1,4 +1,4 @@
-"""Config flow to configure Scout Alarm integration."""
+"""Support for Scout Alarm Security System."""
 
 import logging
 
@@ -59,6 +59,7 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_modes()
 
     async def async_step_modes(self, user_input=None):
+        """Handle a step to process alarm modes."""
         if not user_input:
             return await self._async_show_modes_form()
 

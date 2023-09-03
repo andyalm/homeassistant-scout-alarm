@@ -1,3 +1,5 @@
+"""Support for Scout Alarm Security System."""
+
 import asyncio
 import json
 import logging
@@ -9,9 +11,12 @@ from .scout_session import ScoutSession
 
 
 class ScoutListener:
+    """Listener class."""
+
     api_key = "baf06f5a867d462e09d4"
 
     def __init__(self, session: ScoutSession, loop) -> None:
+        """Initialize."""
         self.session = session
         self._loop = loop
 
@@ -22,20 +27,25 @@ class ScoutListener:
         self._locations = []
 
     async def async_connect(self):
+        """Connect to the REST API."""
         await self.__async_pusher_connect()
 
     async def async_add_location(self, location_id):
+        """Add location."""
         self._locations.append(location_id)
         return await self.__async_subscribe_location(location_id)
 
     def on_mode_change(self, callback):
+        """Trigger on mode change."""
         self._mode_handlers.append(callback)
 
     def on_device_change(self, callback):
+        """Trigger on device changes."""
         self._device_handlers.append(callback)
 
     async def __async_subscribe_location(self, location_id):
-        LOGGER.info(f"subscribing to location #{location_id}...")
+        """Subscribe to a location."""
+        LOGGER.debug(f"subscribing to location #{location_id}...")
         channel_name = f"private-{location_id}"
         channel_token = await self.session.async_get_channel_token(
             self.socket_id, channel_name
@@ -57,16 +67,17 @@ class ScoutListener:
         channel.bind("mode", mode_change)
         channel.bind("device", device_change)
 
-        LOGGER.info(f"subscribed to location #{location_id}")
+        LOGGER.debug(f"subscribed to location #{location_id}")
         return channel
 
     def __async_pusher_connect(self):
+        """Connect to the API."""
         connected_future = asyncio.Future()
 
         def connect_handler(payload):
             data = json.loads(payload)
             self.socket_id = data["socket_id"]
-            LOGGER.info(
+            LOGGER.debug(
                 f"Connected to scout_alarm pusher with socket_id '{self.socket_id}'"
             )
             # re-subscribe to any locations we've already subscribed to (to handle reconnects)

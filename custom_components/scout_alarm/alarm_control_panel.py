@@ -1,4 +1,5 @@
-"""Support for Scout Alarm Security System alarm control panels."""
+"""Support for Scout Alarm Security System."""
+
 import asyncio
 import json
 
@@ -12,7 +13,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
     ATTR_CODE_FORMAT,
-    CONF_USERNAME,
     STATE_ALARM_ARMED_AWAY,
     STATE_ALARM_ARMED_CUSTOM_BYPASS,
     STATE_ALARM_ARMED_HOME,
@@ -44,7 +44,6 @@ async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities
 ):
     """Set up entry."""
-    config_entry.data[CONF_USERNAME]
     scout_alarm = hass.data[DOMAIN]
     async_add_entities(
         [
@@ -69,6 +68,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         listener: ScoutListener,
         state_to_mode: dict[str, str],
     ) -> None:
+        """Initialize the control panel."""
         self.state_to_mode = state_to_mode
         self.mode_to_state = {value: key for key, value in self.state_to_mode.items()}
         self._modes = None
@@ -82,6 +82,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     @property
     def unique_id(self):
+        """Return the unique ID."""
         return self._location["id"] if self._location else None
 
     @property
@@ -91,6 +92,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     @property
     def state(self):
+        """Return the state."""
         if self._modes is None:
             return None
 
@@ -142,6 +144,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     @property
     def should_poll(self) -> bool:
+        """Return whether the device should poll."""
         return False
 
     async def async_alarm_disarm(self, code=None):
@@ -163,11 +166,13 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             await self._api.update_mode_state(away_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_night(self, code=None):
+        """Send arm night command."""
         night_mode = self.__mode_for_state(STATE_ALARM_ARMED_NIGHT)
         if night_mode:
             await self._api.update_mode_state(night_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_custom_bypass(self, code=None):
+        """Send arm bypass command."""
         bypass_mode = self.__mode_for_state(STATE_ALARM_ARMED_CUSTOM_BYPASS)
         if bypass_mode:
             await self._api.update_mode_state(bypass_mode["id"], SCOUT_MODE_ARMING)
@@ -179,7 +184,9 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self._location = await self._api.get_current_location()
         last_changed_by = self._last_changed_by or "Unknown"
         LOGGER.debug(
-            f"scout_alarm panel state is {self.state} (last changed by {last_changed_by})"
+            "scout_alarm panel state is %s (last changed by %s",
+            self.state,
+            last_changed_by,
         )
         if self._location_channel is None:
             self._location_channel = await self._listener.async_add_location(
@@ -197,7 +204,10 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             num_retries = 0
             while mode and mode["state"] != expected_state["event"]:
                 LOGGER.warning(
-                    f"Retrieved state from api did not match the state from the last mode event (last event: '{expected_state['event']}', retrieved state: '{mode['state']}', retries: {num_retries})"
+                    "Retrieved state from api did not match the state from the last mode event (last event: '%s', retrieved state: '%s', retries: %s)",
+                    expected_state["event"],
+                    mode["state"],
+                    num_retries,
                 )
                 await asyncio.sleep(1)
                 num_retries += 1
@@ -209,7 +219,10 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
                 )
                 if num_retries >= 30:
                     LOGGER.error(
-                        f"Scout alarm_control_panel may be out of sync. Expected mode '{expected_state['mode_id']}' to have state '{expected_state['event']}' but found: {json.dumps(self._modes)}."
+                        "Scout alarm_control_panel may be out of sync. Expected mode '%s' to have state '%s' but found: %s",
+                        expected_state["mode_id"],
+                        expected_state["event"],
+                        json.dumps(self._modes),
                     )
                     break
 
@@ -244,6 +257,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         }
 
     def get_mode(self, scout_mode):
+        """Return the alarm panel's current mode."""
         armed_modes = [m for m in self._modes if m["state"] == scout_mode]
         if len(armed_modes) == 0:
             return None
@@ -251,21 +265,27 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         return armed_modes[0]
 
     def is_alarmed(self):
+        """Return whether the alarm panel armed."""
         return self.alarmed_mode() is not None
 
     def mode(self):
+        """Return alarm panel's current mode."""
         return self.alarmed_mode() or self.armed_mode() or self.arming_mode()
 
     def alarmed_mode(self):
+        """Return whether the alarm panel is in Alarmed."""
         return self.get_mode(SCOUT_MODE_ALARMED)
 
     def armed_mode(self):
+        """Return whether the alarm panel is in Armed mode."""
         return self.get_mode(SCOUT_MODE_ARMED)
 
     def arming_mode(self):
+        """Return whether the alarm panel is in Arming mode."""
         return self.get_mode(SCOUT_MODE_ARMING)
 
     def __mode_for_state(self, state):
+        """Return alarm panel's mode for the current state."""
         mode_name = self.state_to_mode.get(state)
         if mode_name is None:
             return None
@@ -277,6 +297,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         return matching_modes[0]
 
     def __on_mode_changed(self, data):
+        """Triggered when the alarm panel mode has changed."""
         affector = data.get("affector")
         if affector:
             last_changed_by = affector.get("name")
@@ -286,6 +307,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         self.schedule_update_ha_state(force_refresh=True)
 
     def __pop_last_pushed_state(self):
+        """Pop the last pushed state."""
         last_pushed_state = self._last_pushed_state
         self._last_pushed_state = None
 

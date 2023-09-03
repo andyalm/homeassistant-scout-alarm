@@ -1,3 +1,5 @@
+"""Support for Scout Alarm Security System."""
+
 from copy import deepcopy
 
 import voluptuous as vol
@@ -61,6 +63,7 @@ async def async_setup(hass: HomeAssistant, config):
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    """Set up entry."""
     username = config_entry.data[CONF_USERNAME]
     password = config_entry.data[CONF_PASSWORD]
     mode_map = config_entry.data[CONF_MODES]
@@ -78,9 +81,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
 
 class ScoutAlarm:
+    """Represents the integration."""
+
     def __init__(
         self, username, password, state_to_mode_map, hass: HomeAssistant
     ) -> None:
+        """Initialize the integration."""
         self.session = ScoutSession(username, password)
         self.api = ScoutApi(self.session)
         self.location_api = ScoutLocationApi(self.api)
