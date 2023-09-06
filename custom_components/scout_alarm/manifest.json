@@ -1,13 +1,13 @@
 {
   "domain": "scout_alarm",
   "name": "Scout Alarm",
-  "version": "0.6.0",
-  "integration_type": "hub",
-  "iot_class": "cloud_push",
   "codeowners": ["@andyalm","@jakecolman"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/andyalm/homeassistant-scout-alarm",
+  "integration_type": "hub",
+  "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/andyalm/homeassistant-scout-alarm/issues",
-  "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"]
+  "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"],
+  "version": "0.6.0"
 }
