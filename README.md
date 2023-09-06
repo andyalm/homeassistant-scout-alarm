@@ -1,11 +1,28 @@
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/release/andyalm/homeassistant-scout-alarm.svg)](https://github.com/andyalm/homeassistant-scout-alarm/releases)
+[![HA integration usage](https://img.shields.io/badge/dynamic/json?color=41BDF5&logo=home-assistant&label=integration%20usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.scout_alarm.total)](https://analytics.home-assistant.io/custom_integrations.json)
+
 # Scout Alarm for Home Assistant
 
 A custom [Scout Alarm](https://www.scoutalarm.com/) Integration for Home Assistant.
 
 ## Installation
 
-1. Copy the `custom_components/scout_alarm` directory from this repo to your Home Assistant installation.
-2. Add the integration via the UI.
+You can install this integration via [HACS](#hacs) or [manually](#manual).
+
+### HACS
+
+Search for the Scout Alarm integration and choose install. Reboot Home Assistant and configure the Scout Alarm integration via the integrations page or press the blue button below.
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=scout_alarm)
+
+
+### Manual
+
+Copy the `custom_components/scout_alarm` to your custom_components folder. Reboot Home Assistant and configure the iKamand integration via the integrations page or press the blue button below.
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=scout_alarm)
+
 
 ### YAML Configuration
 
