@@ -8,6 +8,6 @@
   "integration_type": "hub",
   "iot_class": "cloud_push",
   "issue_tracker": "https://github.com/andyalm/homeassistant-scout-alarm/issues",
-  "requirements": ["aiohttp","pysher==1.0.6","websocket-client==0.57.0"],
+  "requirements": ["aiohttp","pysher==1.0.7","websocket-client"],
   "version": "1.0.0"
 }
