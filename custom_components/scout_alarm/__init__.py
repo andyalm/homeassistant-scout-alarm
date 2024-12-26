@@ -72,10 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await scout_alarm.listener.async_connect()
     hass.data[DOMAIN] = scout_alarm
 
-    for platform in SCOUT_PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(config_entry, platform)
-        )
+    await hass.config_entries.async_forward_entry_setups(config_entry, SCOUT_PLATFORMS)
 
     return True
 
