@@ -124,15 +124,15 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     def supported_features(self) -> int:
         """Return the list of supported features."""
         features = 0
-        if self.state_to_mode.get(AlarmControlPanelState.ARMED_HOME):
+        if self.state_to_mode.get(str(AlarmControlPanelState.ARMED_HOME)):
             features |= AlarmControlPanelEntityFeature.ARM_HOME
-        if self.state_to_mode.get(AlarmControlPanelState.ARMED_AWAY):
+        if self.state_to_mode.get(str(AlarmControlPanelState.ARMED_AWAY)):
             features |= AlarmControlPanelEntityFeature.ARM_AWAY
-        if self.state_to_mode.get(AlarmControlPanelState.ARMED_NIGHT):
+        if self.state_to_mode.get(str(AlarmControlPanelState.ARMED_NIGHT)):
             features |= AlarmControlPanelEntityFeature.ARM_NIGHT
-        if self.state_to_mode.get(AlarmControlPanelState.ARMED_CUSTOM_BYPASS):
+        if self.state_to_mode.get(str(AlarmControlPanelState.ARMED_CUSTOM_BYPASS)):
             features |= AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
-        if self.state_to_mode.get(AlarmControlPanelState.ARMED_VACATION):
+        if self.state_to_mode.get(str(AlarmControlPanelState.ARMED_VACATION)):
             features |= AlarmControlPanelEntityFeature.ARM_VACATION
 
         return features
@@ -287,7 +287,7 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     def __mode_for_state(self, state):
         """Return alarm panel's mode for the current state."""
-        mode_name = self.state_to_mode.get(state)
+        mode_name = self.state_to_mode.get(str(state))
         if mode_name is None:
             return None
 

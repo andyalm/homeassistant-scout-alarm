@@ -60,11 +60,11 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not user_input:
             return await self._async_show_modes_form()
 
-        night_mode = user_input.get(AlarmControlPanelState.ARMED_NIGHT)
-        away_mode = user_input.get(AlarmControlPanelState.ARMED_AWAY)
-        home_mode = user_input.get(AlarmControlPanelState.ARMED_HOME)
-        bypass_mode = user_input.get(AlarmControlPanelState.ARMED_CUSTOM_BYPASS)
-        vacation_mode = user_input.get(AlarmControlPanelState.ARMED_VACATION)
+        night_mode = user_input.get(str(AlarmControlPanelState.ARMED_NIGHT))
+        away_mode = user_input.get(str(AlarmControlPanelState.ARMED_AWAY))
+        home_mode = user_input.get(str(AlarmControlPanelState.ARMED_HOME))
+        bypass_mode = user_input.get(str(AlarmControlPanelState.ARMED_CUSTOM_BYPASS))
+        vacation_mode = user_input.get(str(AlarmControlPanelState.ARMED_VACATION))
 
         if not night_mode and not away_mode and not home_mode and not bypass_mode and not vacation_mode:
             return await self._async_show_modes_form(
@@ -125,11 +125,11 @@ class ScoutAlarmConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="modes",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(AlarmControlPanelState.ARMED_HOME): vol.In(scout_modes),
-                    vol.Optional(AlarmControlPanelState.ARMED_AWAY): vol.In(scout_modes),
-                    vol.Optional(AlarmControlPanelState.ARMED_NIGHT): vol.In(scout_modes),
-                    vol.Optional(AlarmControlPanelState.ARMED_CUSTOM_BYPASS): vol.In(scout_modes),
-                    vol.Optional(AlarmControlPanelState.ARMED_VACATION): vol.In(scout_modes),
+                    vol.Optional(str(AlarmControlPanelState.ARMED_HOME)): vol.In(scout_modes),
+                    vol.Optional(str(AlarmControlPanelState.ARMED_AWAY)): vol.In(scout_modes),
+                    vol.Optional(str(AlarmControlPanelState.ARMED_NIGHT)): vol.In(scout_modes),
+                    vol.Optional(str(AlarmControlPanelState.ARMED_CUSTOM_BYPASS)): vol.In(scout_modes),
+                    vol.Optional(str(AlarmControlPanelState.ARMED_VACATION)): vol.In(scout_modes),
                 }
             ),
             errors=errors,

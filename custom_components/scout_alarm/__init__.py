@@ -26,11 +26,11 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Required(CONF_PASSWORD): cv.string,
                 vol.Required(CONF_MODES): vol.Schema(
                     {
-                        vol.Optional(AlarmControlPanelState.ARMED_AWAY): cv.string,
-                        vol.Optional(AlarmControlPanelState.ARMED_HOME): cv.string,
-                        vol.Optional(AlarmControlPanelState.ARMED_NIGHT): cv.string,
-                        vol.Optional(AlarmControlPanelState.ARMED_CUSTOM_BYPASS): cv.string,
-                        vol.Optional(AlarmControlPanelState.ARMED_VACATION): cv.string,
+                        vol.Optional(str(AlarmControlPanelState.ARMED_AWAY)): cv.string,
+                        vol.Optional(str(AlarmControlPanelState.ARMED_HOME)): cv.string,
+                        vol.Optional(str(AlarmControlPanelState.ARMED_NIGHT)): cv.string,
+                        vol.Optional(str(AlarmControlPanelState.ARMED_CUSTOM_BYPASS)): cv.string,
+                        vol.Optional(str(AlarmControlPanelState.ARMED_VACATION)): cv.string,
                     }
                 ),
             }
