@@ -7,12 +7,9 @@ import voluptuous as vol
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
     CONF_PASSWORD,
-    CONF_USERNAME,
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_CUSTOM_BYPASS,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_ARMED_NIGHT,
+    CONF_USERNAME
 )
+from homeassistant.components.alarm_control_panel import AlarmControlPanelState
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 
@@ -29,10 +26,11 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Required(CONF_PASSWORD): cv.string,
                 vol.Required(CONF_MODES): vol.Schema(
                     {
-                        vol.Optional(STATE_ALARM_ARMED_AWAY): cv.string,
-                        vol.Optional(STATE_ALARM_ARMED_HOME): cv.string,
-                        vol.Optional(STATE_ALARM_ARMED_NIGHT): cv.string,
-                        vol.Optional(STATE_ALARM_ARMED_CUSTOM_BYPASS): cv.string,
+                        vol.Optional(AlarmControlPanelState.ARMED_AWAY): cv.string,
+                        vol.Optional(AlarmControlPanelState.ARMED_HOME): cv.string,
+                        vol.Optional(AlarmControlPanelState.ARMED_NIGHT): cv.string,
+                        vol.Optional(AlarmControlPanelState.ARMED_CUSTOM_BYPASS): cv.string,
+                        vol.Optional(AlarmControlPanelState.ARMED_VACATION): cv.string,
                     }
                 ),
             }

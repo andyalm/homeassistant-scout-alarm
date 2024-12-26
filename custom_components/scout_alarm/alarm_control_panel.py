@@ -8,19 +8,12 @@ from homeassistant.components.alarm_control_panel import (
     ATTR_CHANGED_BY,
     ATTR_CODE_ARM_REQUIRED,
     AlarmControlPanelEntityFeature,
+    AlarmControlPanelState
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ATTRIBUTION,
-    ATTR_CODE_FORMAT,
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_CUSTOM_BYPASS,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_ARMED_NIGHT,
-    STATE_ALARM_ARMING,
-    STATE_ALARM_DISARMED,
-    STATE_ALARM_PENDING,
-    STATE_ALARM_TRIGGERED,
+    ATTR_CODE_FORMAT
 )
 from homeassistant.core import HomeAssistant
 
@@ -91,13 +84,13 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
         return ICON
 
     @property
-    def state(self):
+    def alarm_state(self) -> AlarmControlPanelState | None:
         """Return the state."""
         if self._modes is None:
             return None
 
         if self.is_alarmed():
-            return STATE_ALARM_TRIGGERED
+            return AlarmControlPanelState.TRIGGERED
 
         armed_mode = self.armed_mode()
         if (
@@ -106,16 +99,16 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
             and self._last_pushed_state["mode_id"] == armed_mode["id"]
             and self._last_pushed_state["event"] == SCOUT_MODE_EVENT_TRIGGERED
         ):
-            return STATE_ALARM_PENDING
+            return AlarmControlPanelState.PENDING
 
         if armed_mode is not None:
-            return self.mode_to_state[armed_mode["name"]] or STATE_ALARM_ARMED_AWAY
+            return self.mode_to_state[armed_mode["name"]] or AlarmControlPanelState.ARMED_AWAY
 
         arming_mode = self.arming_mode()
         if arming_mode is not None:
-            return STATE_ALARM_ARMING
+            return AlarmControlPanelState.ARMING
 
-        return STATE_ALARM_DISARMED
+        return AlarmControlPanelState.DISARMED
 
     @property
     def changed_by(self):
@@ -131,14 +124,16 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
     def supported_features(self) -> int:
         """Return the list of supported features."""
         features = 0
-        if self.state_to_mode.get(STATE_ALARM_ARMED_HOME):
+        if self.state_to_mode.get(AlarmControlPanelState.ARMED_HOME):
             features |= AlarmControlPanelEntityFeature.ARM_HOME
-        if self.state_to_mode.get(STATE_ALARM_ARMED_AWAY):
+        if self.state_to_mode.get(AlarmControlPanelState.ARMED_AWAY):
             features |= AlarmControlPanelEntityFeature.ARM_AWAY
-        if self.state_to_mode.get(STATE_ALARM_ARMED_NIGHT):
+        if self.state_to_mode.get(AlarmControlPanelState.ARMED_NIGHT):
             features |= AlarmControlPanelEntityFeature.ARM_NIGHT
-        if self.state_to_mode.get(STATE_ALARM_ARMED_CUSTOM_BYPASS):
+        if self.state_to_mode.get(AlarmControlPanelState.ARMED_CUSTOM_BYPASS):
             features |= AlarmControlPanelEntityFeature.ARM_CUSTOM_BYPASS
+        if self.state_to_mode.get(AlarmControlPanelState.ARMED_VACATION):
+            features |= AlarmControlPanelEntityFeature.ARM_VACATION
 
         return features
 
@@ -155,27 +150,33 @@ class ScoutAlarmControlPanel(alarm.AlarmControlPanelEntity):
 
     async def async_alarm_arm_home(self, code=None):
         """Send arm home command."""
-        home_mode = self.__mode_for_state(STATE_ALARM_ARMED_HOME)
+        home_mode = self.__mode_for_state(AlarmControlPanelState.ARMED_HOME)
         if home_mode:
             await self._api.update_mode_state(home_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_away(self, code=None):
         """Send arm away command."""
-        away_mode = self.__mode_for_state(STATE_ALARM_ARMED_AWAY)
+        away_mode = self.__mode_for_state(AlarmControlPanelState.ARMED_AWAY)
         if away_mode:
             await self._api.update_mode_state(away_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_night(self, code=None):
         """Send arm night command."""
-        night_mode = self.__mode_for_state(STATE_ALARM_ARMED_NIGHT)
+        night_mode = self.__mode_for_state(AlarmControlPanelState.ARMED_NIGHT)
         if night_mode:
             await self._api.update_mode_state(night_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_alarm_arm_custom_bypass(self, code=None):
         """Send arm bypass command."""
-        bypass_mode = self.__mode_for_state(STATE_ALARM_ARMED_CUSTOM_BYPASS)
+        bypass_mode = self.__mode_for_state(AlarmControlPanelState.ARMED_CUSTOM_BYPASS)
         if bypass_mode:
             await self._api.update_mode_state(bypass_mode["id"], SCOUT_MODE_ARMING)
+
+    async def async_alarm_arm_vacation(self, code=None):
+        """Send arm vacation command."""
+        vacation_mode = self.__mode_for_state(AlarmControlPanelState.ARMED_VACATION)
+        if vacation_mode:
+            await self._api.update_mode_state(vacation_mode["id"], SCOUT_MODE_ARMING)
 
     async def async_update(self):
         """Update device state."""
